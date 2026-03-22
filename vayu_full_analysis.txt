@@ -1,0 +1,4298 @@
+===========================================================================
+  VAYU — FULL DATA ANALYSIS REPORT
+  Root: /Users/rachitgoyal/Desktop/vayu-sul/data
+  Total files found: 299
+===========================================================================
+
+===========================================================================
+  SCHEMA BREAKDOWN SUMMARY
+===========================================================================
+
+  [CAAQMS_HOURLY]
+  Files : 1
+  Rows  : 59,150
+  Use   : BEST for regression — raw pollutant readings, hourly, no AQI col (you compute it)
+
+  [REALTIME_WIDE]
+  Files : 5
+  Rows  : 231,654
+  Use   : BEST for regression — has AQI + all pollutants already
+
+  [LONG_FORMAT]
+  Files : 3
+  Rows  : 9,792
+  Use   : GOOD — needs pivoting to wide, covers all states in one file
+
+  [AQI_BULLETIN]
+  Files : 277
+  Rows  : 299,972
+  Use   : GOOD for clustering — city-level daily AQI, no raw pollutants
+
+  [MULTI_CITY_HIST]
+  Files : 2
+  Rows  : 1,684,320
+  Use   : MODERATE — multi-city, check if raw pollutants or just AQI
+
+  [WEATHER_PM25]
+  Files : 1
+  Rows  : 2,192
+  Use   : LOW — only PM2.5 + weather, missing 5 of 6 pollutants
+
+  [UNKNOWN_AQ]
+  Files : 9
+  Rows  : 160,806
+  Use   : REVIEW — has some AQ data, schema unclear
+
+  [IRRELEVANT]
+  Files : 1
+  Rows  : 31
+  Use   : SKIP — no air quality data
+
+  TOTAL USABLE ROWS (relevant schemas): 2,284,888
+  FAILED TO READ: 0 files
+
+───────────────────────────────────────────────────────────────────────────
+  SCHEMA: CAAQMS_HOURLY — BEST for regression — raw pollutant readings, hourly, no AQI col (you compute it)
+───────────────────────────────────────────────────────────────────────────
+
+  File         : AP001.csv
+  Source       : Kaggle: abhisheksjha/time-series-air-quality-data (CAAQMS hourly)
+  Size         : 7990.8 KB
+  Shape        : 59,150 rows x 23 cols
+  Date range   : N/A
+  Cities       : N/A
+  Stations     : N/A
+  States       : N/A
+  AQI range    : N/A
+  Missing avg  : 10.5%
+  Sentinel 999 : No
+  Pollutants   : PM2.5 (ug/m3), PM10 (ug/m3), NO2 (ug/m3), NOx (ppb), NH3 (ug/m3), SO2 (ug/m3), Ozone (ug/m3), Benzene (ug/m3), Toluene (ug/m3), Xylene (ug/m3)
+  All columns  : From Date | To Date | PM2.5 (ug/m3) | PM10 (ug/m3) | NO (ug/m3) | NO2 (ug/m3) | NOx (ppb) | NH3 (ug/m3) | SO2 (ug/m3) | 
+
+───────────────────────────────────────────────────────────────────────────
+  SCHEMA: REALTIME_WIDE — BEST for regression — has AQI + all pollutants already
+───────────────────────────────────────────────────────────────────────────
+
+  File         : delhi_ncr_aqi_dataset.csv
+  Source       : Kaggle: vishardmehta/delhi-pollution-aqi-dataset
+  Size         : 31991.8 KB
+  Shape        : 201,664 rows x 25 cols
+  Date range   : N/A
+  Cities       : 5 unique (Delhi, Noida, Gurugram, Faridabad...)
+  Stations     : 23 unique
+  States       : N/A
+  AQI range    : 25 – 500 (mean 266)
+  Missing avg  : 0.0%
+  Sentinel 999 : YES — needs cleaning
+  Pollutants   : pm25, pm10, no2, so2, o3
+  All columns  : datetime | date | year | month | day | hour | day_of_week | is_weekend | season | city | station | latitude | longitude 
+
+  File         : kaggle-2015-o-2020.csv
+  Source       : Kaggle: rohanrao/air-quality-data-in-india (2015–2020)
+  Size         : 2513.7 KB
+  Shape        : 29,531 rows x 16 cols
+  Date range   : N/A
+  Cities       : 26 unique (Ahmedabad, Aizawl, Amaravati, Amritsar...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 13 – 500 (mean 153)
+  Missing avg  : 18.7%
+  Sentinel 999 : No
+  Pollutants   : PM2.5, PM10, NO2, NOx, NH3, SO2, O3, Benzene, Toluene, Xylene
+  All columns  : City | Date | PM2.5 | PM10 | NO | NO2 | NOx | NH3 | CO | SO2 | O3 | Benzene | Toluene | Xylene | AQI | AQI_Bucket
+
+  File         : Dataset_AQI21-4.xlsx
+  Source       : Kaggle: ishankat/real-time-aqi
+  Size         : 21.4 KB
+  Shape        : 153 rows x 11 cols
+  Date range   : N/A
+  Cities       : 138 unique (Gulzarpet, Anantapur, India, Anand Kala Kshetram, Rajamahendravaram, India, Tirumala-APPCB, Tirupati, India, PWD Grounds, Vijayawada, India...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 2 – 262 (mean 101)
+  Missing avg  : 5.3%
+  Sentinel 999 : YES — needs cleaning
+  Pollutants   : PM2.5, PM10, O3, NO2, SO2
+  All columns  : City | AQI | PM2.5 | PM10 | O3 | NO2 | SO2 | CO | Latitude | Longitude | Time
+
+  File         : Dataset_AQI30-4.xlsx
+  Source       : Kaggle: ishankat/real-time-aqi
+  Size         : 16.6 KB
+  Shape        : 153 rows x 11 cols
+  Date range   : N/A
+  Cities       : 138 unique (Gulzarpet, Anantapur, India, Anand Kala Kshetram, Rajamahendravaram, India, Tirumala-APPCB, Tirupati, India, PWD Grounds, Vijayawada, India...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 10 – 270 (mean 99)
+  Missing avg  : 5.6%
+  Sentinel 999 : No
+  Pollutants   : PM2.5, PM10, O3, NO2, SO2
+  All columns  : City | AQI | PM2.5 | PM10 | O3 | NO2 | SO2 | CO | Latitude | Longitude | Time
+
+  File         : Dataset_AQI22-4.xlsx
+  Source       : Kaggle: ishankat/real-time-aqi
+  Size         : 16.6 KB
+  Shape        : 153 rows x 11 cols
+  Date range   : N/A
+  Cities       : 138 unique (Gulzarpet, Anantapur, India, Anand Kala Kshetram, Rajamahendravaram, India, Tirumala-APPCB, Tirupati, India, PWD Grounds, Vijayawada, India...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 2 – 262 (mean 89)
+  Missing avg  : 5.9%
+  Sentinel 999 : No
+  Pollutants   : PM2.5, PM10, O3, NO2, SO2
+  All columns  : City | AQI | PM2.5 | PM10 | O3 | NO2 | SO2 | CO | Latitude | Longitude | Time
+
+───────────────────────────────────────────────────────────────────────────
+  SCHEMA: LONG_FORMAT — GOOD — needs pivoting to wide, covers all states in one file
+───────────────────────────────────────────────────────────────────────────
+
+  File         : AQI.csv
+  Source       : Unknown
+  Size         : 343.6 KB
+  Shape        : 3,077 rows x 11 cols
+  Date range   : N/A
+  Cities       : 237 unique (Vijayawada, Visakhapatnam, Naharlagun, Byrnihat, Guwahati...)
+  Stations     : 464 unique
+  States       : 30 unique
+  AQI range    : N/A
+  Missing avg  : 2.7%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : country | state | city | station | last_update | latitude | longitude | pollutant_id | pollutant_min | pollutant_max | p
+
+  File         : Data Export.csv
+  Source       : Unknown
+  Size         : 371.7 KB
+  Shape        : 3,327 rows x 11 cols
+  Date range   : N/A
+  Cities       : 255 unique (Buxar, Chhapra, Gaya, Rajamahendravaram, Tirupati...)
+  Stations     : 500 unique
+  States       : 32 unique
+  AQI range    : N/A
+  Missing avg  : 1.5%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : country | state | city | station | last_update | latitude | longitude | pollutant_id | pollutant_min | pollutant_max | p
+
+  File         : 3b01bcb8-0b14-4abf-b6f2-c1bfd384ba69.csv
+  Source       : Unknown
+  Size         : 376.1 KB
+  Shape        : 3,388 rows x 11 cols
+  Date range   : N/A
+  Cities       : 264 unique (Tirupati, Vijayawada, Visakhapatnam, Kadapa, Machilipatnam...)
+  Stations     : 508 unique
+  States       : 30 unique
+  AQI range    : N/A
+  Missing avg  : 2.2%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : country | state | city | station | last_update | latitude | longitude | pollutant_id | pollutant_min | pollutant_max | p
+
+───────────────────────────────────────────────────────────────────────────
+  SCHEMA: AQI_BULLETIN — GOOD for clustering — city-level daily AQI, no raw pollutants
+───────────────────────────────────────────────────────────────────────────
+
+  File         : Chhapra_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 26.9 KB
+  Shape        : 674 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Chhapra...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 22 – 452 (mean 215)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Panchkula_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 107.6 KB
+  Shape        : 2,514 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Panchkula...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 18 – 474 (mean 101)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : GandhiNagar_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 81.5 KB
+  Shape        : 1,704 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (GandhiNagar...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 22 – 305 (mean 89)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Baripada_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 15.0 KB
+  Shape        : 369 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Baripada...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 24 – 321 (mean 131)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Korba_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 14.5 KB
+  Shape        : 360 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Korba...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 14 – 218 (mean 70)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Visakhapatnam_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 114.5 KB
+  Shape        : 2,445 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Visakhapatnam...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 19 – 500 (mean 111)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Pratapgarh_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 11.9 KB
+  Shape        : 273 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Pratapgarh...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 33 – 314 (mean 104)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Kunjemura_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 7.5 KB
+  Shape        : 181 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Kunjemura...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 18 – 345 (mean 89)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Hosur_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 12.6 KB
+  Shape        : 332 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Hosur...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 16 – 232 (mean 86)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Akola_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 7.3 KB
+  Shape        : 192 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Akola...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 30 – 330 (mean 102)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Raipur_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 16.0 KB
+  Shape        : 363 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Raipur...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 20 – 176 (mean 82)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Sivasagar_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 17.1 KB
+  Shape        : 433 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Sivasagar...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 9 – 91 (mean 38)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Panipat_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 61.9 KB
+  Shape        : 1,538 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Panipat...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 27 – 475 (mean 158)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Narnaul_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 62.1 KB
+  Shape        : 1,555 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Narnaul...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 14 – 435 (mean 136)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Palkalaiperur_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 8.1 KB
+  Shape        : 175 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Palkalaiperur...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 24 – 103 (mean 54)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Nayagarh_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 14.6 KB
+  Shape        : 359 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Nayagarh...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 27 – 336 (mean 130)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Durgapur_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 67.9 KB
+  Shape        : 1,670 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Durgapur...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 18 – 451 (mean 142)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Bilaspur_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 28.1 KB
+  Shape        : 666 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Bilaspur...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 16 – 259 (mean 73)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Pune_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 109.0 KB
+  Shape        : 2,718 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Pune...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 19 – 435 (mean 110)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Madikeri_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 26.0 KB
+  Shape        : 692 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Madikeri...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 14 – 127 (mean 42)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Bihar Sharif_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 27.5 KB
+  Shape        : 621 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Bihar Sharif...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 20 – 433 (mean 160)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Hanumangarh_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 12.5 KB
+  Shape        : 281 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Hanumangarh...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 26 – 447 (mean 192)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Mysuru_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 52.0 KB
+  Shape        : 1,393 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Mysuru...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 17 – 217 (mean 52)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Motihari_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 27.6 KB
+  Shape        : 684 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Motihari...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 33 – 448 (mean 168)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Cuddalore_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 10.2 KB
+  Shape        : 245 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Cuddalore...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 13 – 252 (mean 83)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Jabalpur_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 62.4 KB
+  Shape        : 1,516 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Jabalpur...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 22 – 368 (mean 125)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Nandesari_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 29.7 KB
+  Shape        : 726 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Nandesari...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 10 – 348 (mean 109)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Kaithal_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 68.5 KB
+  Shape        : 1,695 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Kaithal...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 18 – 467 (mean 137)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Brajrajnagar_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 60.2 KB
+  Shape        : 1,349 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Brajrajnagar...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 22 – 337 (mean 115)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Belgaum_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 17.5 KB
+  Shape        : 454 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Belgaum...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 30 – 235 (mean 80)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Rupnagar_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 73.4 KB
+  Shape        : 1,758 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Rupnagar...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 17 – 500 (mean 115)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Haldia_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 78.1 KB
+  Shape        : 2,048 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Haldia...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 13 – 430 (mean 87)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Asansol_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 77.1 KB
+  Shape        : 1,937 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Asansol...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 16 – 394 (mean 130)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Faridabad_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 130.6 KB
+  Shape        : 2,922 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Faridabad...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 25 – 496 (mean 206)
+  Missing avg  : 0.1%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Thane_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 79.0 KB
+  Shape        : 2,106 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Thane...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 17 – 500 (mean 125)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Kochi_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 43.4 KB
+  Shape        : 1,134 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Kochi...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 16 – 293 (mean 88)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Bhiwandi_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 6.0 KB
+  Shape        : 148 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Bhiwandi...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 18 – 244 (mean 102)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Tiruchirappalli_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 0.4 KB
+  Shape        : 6 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Tiruchirappalli...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 46 – 107 (mean 73)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Moradabad_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 83.7 KB
+  Shape        : 1,909 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Moradabad...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 21 – 500 (mean 175)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Kanpur_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 121.3 KB
+  Shape        : 2,979 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Kanpur...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 21 – 497 (mean 167)
+  Missing avg  : 0.1%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Hyderabad_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 155.6 KB
+  Shape        : 3,132 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Hyderabad...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 14 – 443 (mean 92)
+  Missing avg  : 0.1%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Kolar_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 19.1 KB
+  Shape        : 505 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Kolar...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 19 – 196 (mean 80)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Dhule_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 6.8 KB
+  Shape        : 179 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Dhule...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 25 – 276 (mean 106)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Parbhani_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 7.0 KB
+  Shape        : 172 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Parbhani...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 24 – 304 (mean 98)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Maihar_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 48.8 KB
+  Shape        : 1,304 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Maihar...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 11 – 262 (mean 56)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Ernakulam_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 33.8 KB
+  Shape        : 827 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Ernakulam...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 23 – 247 (mean 68)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Karauli_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 10.9 KB
+  Shape        : 273 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Karauli...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 22 – 342 (mean 83)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Rajamahendravaram_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 109.0 KB
+  Shape        : 2,211 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Rajamahendravaram...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 13 – 308 (mean 84)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Nagaon_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 10.8 KB
+  Shape        : 280 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Nagaon...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 25 – 386 (mean 119)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Baghpat_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 63.9 KB
+  Shape        : 1,608 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Baghpat...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 22 – 465 (mean 198)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Bulandshahr_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 83.0 KB
+  Shape        : 1,918 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Bulandshahr...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 17 – 500 (mean 187)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Chittoor_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 12.2 KB
+  Shape        : 306 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Chittoor...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 21 – 348 (mean 68)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Firozabad_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 37.6 KB
+  Shape        : 860 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Firozabad...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 17 – 489 (mean 116)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Keonjhar_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 14.4 KB
+  Shape        : 350 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Keonjhar...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 25 – 334 (mean 128)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Chandigarh_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 71.2 KB
+  Shape        : 1,558 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Chandigarh...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 17 – 400 (mean 115)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Katni_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 56.0 KB
+  Shape        : 1,494 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Katni...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 21 – 350 (mean 145)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Medikeri_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 14.5 KB
+  Shape        : 384 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Medikeri...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 14 – 163 (mean 47)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Yamunanagar_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 73.2 KB
+  Shape        : 1,654 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Yamunanagar...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 21 – 400 (mean 161)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Ramanagara_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 56.6 KB
+  Shape        : 1,369 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Ramanagara...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 21 – 268 (mean 58)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Bharatpur_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 13.0 KB
+  Shape        : 309 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Bharatpur...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 25 – 396 (mean 156)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Satna_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 77.4 KB
+  Shape        : 1,985 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Satna...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 13 – 500 (mean 89)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Chengalpattu_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 6.2 KB
+  Shape        : 133 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Chengalpattu...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 24 – 399 (mean 102)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Chikkamagaluru_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 53.7 KB
+  Shape        : 1,208 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Chikkamagaluru...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 18 – 189 (mean 47)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Tumidih_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 8.1 KB
+  Shape        : 205 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Tumidih...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 17 – 237 (mean 81)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Thiruvananthapuram_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 118.6 KB
+  Shape        : 2,301 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Thiruvananthapuram...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 12 – 223 (mean 59)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Agra_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 114.0 KB
+  Shape        : 2,922 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Agra...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 19 – 500 (mean 154)
+  Missing avg  : 0.1%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Karnal_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 65.6 KB
+  Shape        : 1,670 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Karnal...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 17 – 456 (mean 133)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Bhagalpur_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 32.8 KB
+  Shape        : 748 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Bhagalpur...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 28 – 448 (mean 189)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Meerut_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 64.3 KB
+  Shape        : 1,550 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Meerut...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 17 – 459 (mean 186)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Chamarajanagar_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 43.9 KB
+  Shape        : 1,023 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Chamarajanagar...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 21 – 169 (mean 45)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Sikar_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 10.9 KB
+  Shape        : 285 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Sikar...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 31 – 452 (mean 135)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Vellore_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 4.8 KB
+  Shape        : 117 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Vellore...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 20 – 244 (mean 83)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Purnia_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 24.3 KB
+  Shape        : 612 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Purnia...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 44 – 460 (mean 195)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Tonk_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 9.5 KB
+  Shape        : 255 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Tonk...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 36 – 368 (mean 153)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Ambala_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 66.3 KB
+  Shape        : 1,679 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Ambala...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 21 – 452 (mean 132)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Sawai Madhopur_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 12.3 KB
+  Shape        : 257 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Sawai Madhopur...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 42 – 295 (mean 112)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Lucknow_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 134.3 KB
+  Shape        : 3,056 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Lucknow...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 32 – 494 (mean 181)
+  Missing avg  : 0.1%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Thrissur_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 35.9 KB
+  Shape        : 861 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Thrissur...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 28 – 181 (mean 72)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Pithampur_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 93.2 KB
+  Shape        : 2,194 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Pithampur...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 15 – 310 (mean 114)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Ujjain_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 82.4 KB
+  Shape        : 2,097 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Ujjain...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 25 – 500 (mean 133)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Davanagere_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 33.6 KB
+  Shape        : 808 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Davanagere...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 8 – 233 (mean 56)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Raichur_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 32.2 KB
+  Shape        : 801 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Raichur...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 17 – 390 (mean 90)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Kota_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 82.7 KB
+  Shape        : 2,172 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Kota...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 25 – 375 (mean 121)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Vatva_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 65.7 KB
+  Shape        : 1,695 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Vatva...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 34 – 380 (mean 127)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Belapur_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 6.7 KB
+  Shape        : 172 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Belapur...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 22 – 243 (mean 82)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Rajgir_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 23.3 KB
+  Shape        : 600 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Rajgir...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 17 – 461 (mean 167)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Jhalawar_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 11.8 KB
+  Shape        : 284 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Jhalawar...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 29 – 337 (mean 105)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Palwal_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 64.1 KB
+  Shape        : 1,627 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Palwal...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 17 – 465 (mean 125)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Banswara_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 11.5 KB
+  Shape        : 275 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Banswara...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 27 – 326 (mean 115)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Bengaluru_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 159.0 KB
+  Shape        : 3,120 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Bengaluru...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 19 – 266 (mean 75)
+  Missing avg  : 0.1%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Aurangabad (Bihar)_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 22.3 KB
+  Shape        : 436 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Aurangabad (Bihar)...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 28 – 406 (mean 154)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Singrauli_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 82.8 KB
+  Shape        : 1,996 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Singrauli...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 17 – 426 (mean 181)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Samastipur_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 22.1 KB
+  Shape        : 512 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Samastipur...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 25 – 459 (mean 201)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Vijayawada_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 40.5 KB
+  Shape        : 917 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Vijayawada...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 19 – 500 (mean 74)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Thoothukudi_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 45.4 KB
+  Shape        : 1,067 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Thoothukudi...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 13 – 272 (mean 57)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Cuttack_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 2.4 KB
+  Shape        : 59 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Cuttack...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 48 – 355 (mean 201)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Sonipat_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 58.2 KB
+  Shape        : 1,458 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Sonipat...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 30 – 455 (mean 167)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Chhal_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 8.1 KB
+  Shape        : 214 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Chhal...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 21 – 230 (mean 65)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Hapur_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 63.0 KB
+  Shape        : 1,670 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Hapur...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 13 – 477 (mean 162)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Darbhanga_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 17.1 KB
+  Shape        : 407 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Darbhanga...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 17 – 473 (mean 208)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Karwar_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 0.5 KB
+  Shape        : 11 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Karwar...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 66 – 222 (mean 127)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Manesar_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 66.8 KB
+  Shape        : 1,657 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Manesar...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 23 – 486 (mean 173)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Nalbari_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 13.8 KB
+  Shape        : 348 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Nalbari...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 20 – 344 (mean 150)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Dhanbad_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 8.4 KB
+  Shape        : 214 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Dhanbad...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 76 – 383 (mean 186)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Rourkela_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 16.5 KB
+  Shape        : 389 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Rourkela...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 22 – 322 (mean 136)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Bileipada_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 15.3 KB
+  Shape        : 365 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Bileipada...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 35 – 384 (mean 157)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Bundi_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 7.5 KB
+  Shape        : 197 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Bundi...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 39 – 353 (mean 144)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Guwahati_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 73.3 KB
+  Shape        : 1,744 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Guwahati...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 10 – 415 (mean 121)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Sirohi_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 8.7 KB
+  Shape        : 219 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Sirohi...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 24 – 237 (mean 92)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Bettiah_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 22.9 KB
+  Shape        : 573 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Bettiah...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 18 – 470 (mean 191)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Shillong_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 44.7 KB
+  Shape        : 1,138 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Shillong...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 7 – 484 (mean 47)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Haveri_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 20.0 KB
+  Shape        : 529 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Haveri...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 15 – 262 (mean 69)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Varanasi_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 120.2 KB
+  Shape        : 2,872 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Varanasi...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 16 – 500 (mean 164)
+  Missing avg  : 0.1%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Jalore_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 1.8 KB
+  Shape        : 47 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Jalore...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 89 – 293 (mean 188)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Dausa_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 10.9 KB
+  Shape        : 283 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Dausa...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 37 – 379 (mean 152)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Kashipur_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 9.3 KB
+  Shape        : 223 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Kashipur...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 20 – 240 (mean 92)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Gwalior_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 57.2 KB
+  Shape        : 1,380 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Gwalior...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 21 – 419 (mean 146)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Jalna_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 6.3 KB
+  Shape        : 164 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Jalna...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 24 – 298 (mean 97)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Bahadurgarh_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 74.9 KB
+  Shape        : 1,699 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Bahadurgarh...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 26 – 476 (mean 165)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Bhubaneswar_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 2.7 KB
+  Shape        : 59 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Bhubaneswar...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 52 – 380 (mean 200)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Puducherry_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 42.5 KB
+  Shape        : 1,028 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Puducherry...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 17 – 274 (mean 57)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Amaravati_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 82.7 KB
+  Shape        : 2,030 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Amaravati...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 17 – 307 (mean 77)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Dholpur_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 9.5 KB
+  Shape        : 234 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Dholpur...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 26 – 417 (mean 142)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Kolhapur_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 10.1 KB
+  Shape        : 240 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Kolhapur...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 20 – 338 (mean 84)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Muzaffarnagar_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 78.7 KB
+  Shape        : 1,716 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Muzaffarnagar...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 30 – 446 (mean 184)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Chennai_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 143.6 KB
+  Shape        : 3,074 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Chennai...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 28 – 399 (mean 87)
+  Missing avg  : 0.1%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Jaisalmer_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 9.4 KB
+  Shape        : 219 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Jaisalmer...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 34 – 370 (mean 135)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Sirsa_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 63.4 KB
+  Shape        : 1,651 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Sirsa...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 25 – 462 (mean 133)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Jind_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 61.4 KB
+  Shape        : 1,642 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Jind...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 26 – 491 (mean 164)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Damoh_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 55.0 KB
+  Shape        : 1,479 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Damoh...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 14 – 329 (mean 73)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Bhiwadi_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 82.1 KB
+  Shape        : 2,063 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Bhiwadi...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 28 – 483 (mean 216)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Chandrapur_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 130.7 KB
+  Shape        : 2,851 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Chandrapur...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 14 – 500 (mean 107)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Ludhiana_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 95.8 KB
+  Shape        : 2,298 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Ludhiana...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 19 – 488 (mean 122)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Amritsar_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 93.7 KB
+  Shape        : 2,248 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Amritsar...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 18 – 464 (mean 117)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Mahad_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 6.5 KB
+  Shape        : 172 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Mahad...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 19 – 242 (mean 84)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Talcher_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 65.8 KB
+  Shape        : 1,649 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Talcher...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 19 – 414 (mean 131)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Ramanathapuram_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 20.1 KB
+  Shape        : 448 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Ramanathapuram...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 14 – 246 (mean 52)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Angul_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 2.4 KB
+  Shape        : 62 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Angul...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 59 – 370 (mean 238)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Muzaffarpur_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 120.7 KB
+  Shape        : 2,627 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Muzaffarpur...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 16 – 500 (mean 194)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Barbil_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 2.3 KB
+  Shape        : 57 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Barbil...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 47 – 286 (mean 162)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Ratlam_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 61.5 KB
+  Shape        : 1,560 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Ratlam...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 9 – 302 (mean 101)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Arrah_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 23.9 KB
+  Shape        : 628 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Arrah...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 28 – 420 (mean 177)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Araria_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 23.1 KB
+  Shape        : 596 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Araria...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 28 – 387 (mean 176)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Byasanagar_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 2.5 KB
+  Shape        : 56 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Byasanagar...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 58 – 311 (mean 151)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Tumakuru_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 8.2 KB
+  Shape        : 198 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Tumakuru...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 19 – 254 (mean 96)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Kannur_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 49.7 KB
+  Shape        : 1,236 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Kannur...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 15 – 258 (mean 66)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Bhopal_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 60.2 KB
+  Shape        : 1,523 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Bhopal...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 25 – 392 (mean 122)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Chittorgarh_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 11.1 KB
+  Shape        : 249 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Chittorgarh...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 31 – 339 (mean 127)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Hassan_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 30.9 KB
+  Shape        : 789 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Hassan...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 14 – 190 (mean 64)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Kanchipuram_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 11.0 KB
+  Shape        : 251 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Kanchipuram...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 13 – 320 (mean 59)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Pali_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 81.5 KB
+  Shape        : 2,130 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Pali...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 35 – 453 (mean 122)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Jaipur_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 118.2 KB
+  Shape        : 2,720 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Jaipur...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 30 – 450 (mean 136)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Kollam_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 46.1 KB
+  Shape        : 1,134 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Kollam...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 30 – 272 (mean 83)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Vijayapura_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 49.6 KB
+  Shape        : 1,205 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Vijayapura...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 9 – 169 (mean 54)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Balasore_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 2.8 KB
+  Shape        : 66 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Balasore...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 38 – 357 (mean 188)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Imphal_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 19.8 KB
+  Shape        : 450 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Imphal...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 32 – 294 (mean 95)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Rairangpur_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 13.8 KB
+  Shape        : 321 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Rairangpur...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 27 – 320 (mean 137)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Shivamogga_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 44.7 KB
+  Shape        : 1,062 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Shivamogga...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 25 – 202 (mean 56)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Khurja_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 20.5 KB
+  Shape        : 511 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Khurja...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 19 – 346 (mean 126)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Solapur_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 93.2 KB
+  Shape        : 2,306 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Solapur...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 27 – 255 (mean 100)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Noida_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 98.3 KB
+  Shape        : 2,406 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Noida...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 30 – 500 (mean 206)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Ooty_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 14.4 KB
+  Shape        : 397 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Ooty...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 16 – 142 (mean 58)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Mumbai_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 127.7 KB
+  Shape        : 2,884 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Mumbai...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 23 – 500 (mean 108)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Manguraha_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 17.3 KB
+  Shape        : 421 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Manguraha...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 11 – 332 (mean 103)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Yadgir_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 49.0 KB
+  Shape        : 1,270 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Yadgir...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 13 – 223 (mean 67)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Ghaziabad_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 106.2 KB
+  Shape        : 2,418 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Ghaziabad...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 14 – 500 (mean 222)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Patiala_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 84.0 KB
+  Shape        : 2,095 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Patiala...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 16 – 415 (mean 104)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Kozhikode_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 41.8 KB
+  Shape        : 998 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Kozhikode...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 7 – 417 (mean 58)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Indore_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 60.5 KB
+  Shape        : 1,530 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Indore...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 30 – 295 (mean 113)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Bareilly_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 23.5 KB
+  Shape        : 553 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Bareilly...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 18 – 266 (mean 91)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Mandideep_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 87.2 KB
+  Shape        : 2,094 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Mandideep...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 20 – 361 (mean 117)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Jalandhar_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 89.5 KB
+  Shape        : 2,098 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Jalandhar...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 24 – 377 (mean 112)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Delhi_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 140.9 KB
+  Shape        : 3,143 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Delhi...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 41 – 497 (mean 217)
+  Missing avg  : 0.1%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Chikkaballapur_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 83.2 KB
+  Shape        : 1,804 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Chikkaballapur...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 19 – 207 (mean 67)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Hisar_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 60.5 KB
+  Shape        : 1,581 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Hisar...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 24 – 490 (mean 172)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Loni_Dehat_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 8.3 KB
+  Shape        : 193 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Loni_Dehat...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 51 – 462 (mean 198)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Salem_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 9.4 KB
+  Shape        : 242 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Salem...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 22 – 188 (mean 76)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Howrah_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 100.6 KB
+  Shape        : 2,423 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Howrah...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 17 – 451 (mean 128)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Bikaner_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 11.4 KB
+  Shape        : 285 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Bikaner...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 27 – 395 (mean 164)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Latur_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 7.3 KB
+  Shape        : 192 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Latur...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 21 – 231 (mean 76)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Surat_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 12.4 KB
+  Shape        : 327 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Surat...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 12 – 384 (mean 157)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Srinagar_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 33.5 KB
+  Shape        : 822 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Srinagar...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 18 – 326 (mean 81)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Bathinda_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 72.5 KB
+  Shape        : 1,754 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Bathinda...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 20 – 405 (mean 110)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Ankleshwar_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 65.1 KB
+  Shape        : 1,502 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Ankleshwar...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 35 – 372 (mean 129)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Sri Ganganagar_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 12.8 KB
+  Shape        : 275 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Sri Ganganagar...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 50 – 441 (mean 192)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Gadag_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 26.8 KB
+  Shape        : 743 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Gadag...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 9 – 500 (mean 55)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Suakati_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 14.6 KB
+  Shape        : 364 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Suakati...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 34 – 309 (mean 126)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Kolkata_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 109.1 KB
+  Shape        : 2,510 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Kolkata...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 22 – 419 (mean 116)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Hajipur_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 50.2 KB
+  Shape        : 1,268 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Hajipur...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 15 – 391 (mean 142)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Vrindavan_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 34.4 KB
+  Shape        : 833 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Vrindavan...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 13 – 475 (mean 118)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Bidar_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 20.2 KB
+  Shape        : 531 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Bidar...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 17 – 437 (mean 83)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Mandikhera_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 70.3 KB
+  Shape        : 1,622 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Mandikhera...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 20 – 460 (mean 108)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Bhilai_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 18.3 KB
+  Shape        : 445 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Bhilai...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 16 – 266 (mean 69)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Buxar_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 10.4 KB
+  Shape        : 275 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Buxar...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 47 – 454 (mean 214)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Silchar_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 9.8 KB
+  Shape        : 282 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Silchar...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 3 – 89 (mean 37)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Greater Noida_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 95.7 KB
+  Shape        : 2,034 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Greater Noida...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 23 – 500 (mean 211)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Dehradun_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 18.5 KB
+  Shape        : 450 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Dehradun...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 18 – 296 (mean 91)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Churu_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 9.9 KB
+  Shape        : 256 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Churu...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 32 – 452 (mean 130)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Udaipur_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 88.2 KB
+  Shape        : 2,151 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Udaipur...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 25 – 348 (mean 112)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Rajsamand_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 11.6 KB
+  Shape        : 270 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Rajsamand...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 34 – 309 (mean 101)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Siliguri_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 76.9 KB
+  Shape        : 1,905 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Siliguri...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 20 – 415 (mean 107)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Nashik_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 93.6 KB
+  Shape        : 2,412 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Nashik...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 19 – 300 (mean 92)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Jorapokhar_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 41.9 KB
+  Shape        : 972 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Jorapokhar...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 18 – 438 (mean 137)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Ballabgarh_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 71.8 KB
+  Shape        : 1,673 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Ballabgarh...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 29 – 467 (mean 170)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Nagpur_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 89.6 KB
+  Shape        : 2,280 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Nagpur...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 17 – 342 (mean 106)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Jharsuguda_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 0.1 KB
+  Shape        : 1 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Jharsuguda...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 282 – 282 (mean 282)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Coimbatore_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 36.2 KB
+  Shape        : 841 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Coimbatore...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 18 – 343 (mean 69)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Koppal_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 34.3 KB
+  Shape        : 884 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Koppal...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 19 – 384 (mean 72)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Jhansi_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 24.5 KB
+  Shape        : 620 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Jhansi...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 21 – 277 (mean 110)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Patna_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 109.5 KB
+  Shape        : 2,590 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Patna...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 30 – 488 (mean 190)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Kurukshetra_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 76.4 KB
+  Shape        : 1,740 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Kurukshetra...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 15 – 449 (mean 146)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Baran_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 7.3 KB
+  Shape        : 188 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Baran...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 35 – 322 (mean 127)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Kalyan_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 52.4 KB
+  Shape        : 1,352 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Kalyan...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 14 – 414 (mean 124)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Gaya_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 97.6 KB
+  Shape        : 2,477 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Gaya...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 19 – 479 (mean 152)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Gurugram_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 115.5 KB
+  Shape        : 2,657 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Gurugram...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 25 – 494 (mean 199)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Rishikesh_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 12.3 KB
+  Shape        : 303 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Rishikesh...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 20 – 158 (mean 53)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Ajmer_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 83.7 KB
+  Shape        : 2,121 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Ajmer...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 31 – 357 (mean 103)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Dharwad_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 9.4 KB
+  Shape        : 229 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Dharwad...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 23 – 218 (mean 75)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Jhunjhunu_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 11.7 KB
+  Shape        : 284 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Jhunjhunu...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 36 – 422 (mean 168)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Mandi Gobindgarh_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 108.0 KB
+  Shape        : 2,215 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Mandi Gobindgarh...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 19 – 500 (mean 142)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Alwar_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 84.7 KB
+  Shape        : 2,121 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Alwar...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 28 – 355 (mean 96)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Charkhi Dadri_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 53.5 KB
+  Shape        : 1,163 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Charkhi Dadri...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 21 – 470 (mean 167)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Udupi_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 14.8 KB
+  Shape        : 398 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Udupi...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 26 – 500 (mean 98)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Rohtak_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 93.7 KB
+  Shape        : 2,388 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Rohtak...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 26 – 498 (mean 158)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Loni_Ghaziabad_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 0.2 KB
+  Shape        : 2 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Loni_Ghaziabad...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 315 – 358 (mean 336)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Sasaram_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 24.1 KB
+  Shape        : 605 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Sasaram...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 19 – 401 (mean 169)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Nagaur_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 7.9 KB
+  Shape        : 199 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Nagaur...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 33 – 348 (mean 133)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Sangli_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 7.2 KB
+  Shape        : 195 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Sangli...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 18 – 232 (mean 68)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Munger_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 24.4 KB
+  Shape        : 628 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Munger...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 19 – 445 (mean 206)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Jodhpur_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 110.1 KB
+  Shape        : 2,736 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Jodhpur...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 31 – 436 (mean 167)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Baddi_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 23.1 KB
+  Shape        : 609 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Baddi...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 24 – 402 (mean 157)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Barrackpore_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 1.2 KB
+  Shape        : 27 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Barrackpore...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 32 – 320 (mean 215)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Tensa_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 11.6 KB
+  Shape        : 303 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Tensa...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 22 – 337 (mean 94)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Byrnihat_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 11.5 KB
+  Shape        : 281 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Byrnihat...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 49 – 442 (mean 249)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Dharuhera_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 62.8 KB
+  Shape        : 1,507 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Dharuhera...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 30 – 491 (mean 182)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Dindigul_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 6.3 KB
+  Shape        : 166 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Dindigul...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 26 – 352 (mean 129)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Naharlagun_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 14.6 KB
+  Shape        : 355 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Naharlagun...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 10 – 237 (mean 57)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Ulhasnagar_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 6.5 KB
+  Shape        : 151 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Ulhasnagar...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 32 – 319 (mean 127)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Dewas_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 81.1 KB
+  Shape        : 2,119 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Dewas...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 18 – 327 (mean 107)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Nanded_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 6.1 KB
+  Shape        : 159 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Nanded...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 26 – 244 (mean 93)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Pimpri Chinchwad_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 8.3 KB
+  Shape        : 166 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Pimpri Chinchwad...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 23 – 208 (mean 69)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Aurangabad_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 97.5 KB
+  Shape        : 2,227 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Aurangabad...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 32 – 373 (mean 99)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Bhilwara_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 6.9 KB
+  Shape        : 164 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Bhilwara...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 45 – 331 (mean 136)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Kalaburagi_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 55.5 KB
+  Shape        : 1,299 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Kalaburagi...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 6 – 500 (mean 85)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Jalgaon_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 7.9 KB
+  Shape        : 192 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Jalgaon...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 17 – 321 (mean 110)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Eloor_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 51.2 KB
+  Shape        : 1,373 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Eloor...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 12 – 180 (mean 59)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Begusarai_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 15.0 KB
+  Shape        : 357 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Begusarai...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 27 – 474 (mean 248)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Navi Mumbai_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 136.8 KB
+  Shape        : 2,963 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Navi Mumbai...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 11 – 477 (mean 111)
+  Missing avg  : 0.1%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Hubballi_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 64.8 KB
+  Shape        : 1,559 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Hubballi...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 11 – 314 (mean 80)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Barmer_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 11.3 KB
+  Shape        : 281 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Barmer...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 32 – 344 (mean 106)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Kadapa_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 10.4 KB
+  Shape        : 271 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Kadapa...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 19 – 228 (mean 68)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Saharsa_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 23.7 KB
+  Shape        : 598 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Saharsa...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 27 – 454 (mean 213)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Aizawl_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 40.7 KB
+  Shape        : 1,129 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Aizawl...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 6 – 208 (mean 42)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Anantapur_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 17.8 KB
+  Shape        : 425 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Anantapur...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 22 – 191 (mean 67)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Fatehabad_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 62.9 KB
+  Shape        : 1,501 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Fatehabad...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 17 – 493 (mean 157)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Mangalore_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 37.9 KB
+  Shape        : 897 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Mangalore...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 17 – 235 (mean 71)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Gorakhpur_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 35.7 KB
+  Shape        : 860 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Gorakhpur...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 12 – 393 (mean 94)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Tirupur_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 13.0 KB
+  Shape        : 327 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Tirupur...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 22 – 267 (mean 78)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Kishanganj_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 28.8 KB
+  Shape        : 676 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Kishanganj...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 31 – 403 (mean 160)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Bhiwani_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 66.7 KB
+  Shape        : 1,650 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Bhiwani...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 27 – 471 (mean 146)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Sagar_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 50.0 KB
+  Shape        : 1,291 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Sagar...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 15 – 316 (mean 78)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Ahmedabad_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 113.3 KB
+  Shape        : 2,538 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Ahmedabad...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 15 – 500 (mean 134)
+  Missing avg  : 0.1%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Katihar_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 27.3 KB
+  Shape        : 681 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Katihar...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 46 – 465 (mean 212)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Ariyalur_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 12.0 KB
+  Shape        : 305 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Ariyalur...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 10 – 183 (mean 56)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Bagalkot_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 47.6 KB
+  Shape        : 1,252 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Bagalkot...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 17 – 242 (mean 50)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Siwan_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 22.4 KB
+  Shape        : 587 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Siwan...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 34 – 488 (mean 216)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Amravati_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 8.8 KB
+  Shape        : 210 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Amravati...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 18 – 314 (mean 93)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Badlapur_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 7.3 KB
+  Shape        : 182 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Badlapur...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 24 – 303 (mean 116)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Agartala_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 44.8 KB
+  Shape        : 1,084 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Agartala...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 15 – 362 (mean 125)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Kohima_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 40.1 KB
+  Shape        : 1,018 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Kohima...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 14 – 277 (mean 76)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Prayagraj_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 42.6 KB
+  Shape        : 936 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Prayagraj...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 12 – 387 (mean 109)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Vapi_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 49.7 KB
+  Shape        : 1,349 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Vapi...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 15 – 392 (mean 137)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Milupara_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 7.1 KB
+  Shape        : 174 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Milupara...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 18 – 178 (mean 61)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Gangtok_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 19.6 KB
+  Shape        : 511 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Gangtok...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 12 – 264 (mean 52)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Tirupati_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 101.5 KB
+  Shape        : 2,500 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Tirupati...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 22 – 306 (mean 71)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Gummidipoondi_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 31.0 KB
+  Shape        : 676 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Gummidipoondi...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 8 – 326 (mean 95)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+  File         : Khanna_AQIBulletins.csv
+  Source       : CPCB AQI Bulletin
+  Size         : 79.8 KB
+  Shape        : 2,011 rows x 6 cols
+  Date range   : N/A
+  Cities       : 1 unique (Khanna...)
+  Stations     : N/A
+  States       : N/A
+  AQI range    : 22 – 491 (mean 99)
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
+
+───────────────────────────────────────────────────────────────────────────
+  SCHEMA: MULTI_CITY_HIST — MODERATE — multi-city, check if raw pollutants or just AQI
+───────────────────────────────────────────────────────────────────────────
+
+  File         : aqi_india_38cols_knn_final.csv
+  Source       : Unknown
+  Size         : 173507.2 KB
+  Shape        : 842,160 rows x 31 cols
+  Date range   : N/A
+  Cities       : 29 unique (agartala, ahmedabad, aizawl, bengaluru...)
+  Stations     : N/A
+  States       : 29 unique
+  AQI range    : N/A
+  Missing avg  : 0.0%
+  Sentinel 999 : YES — needs cleaning
+  Pollutants   : pm2_5_ugm3, pm10_ugm3, no2_ugm3, so2_ugm3, o3_ugm3, pm25_category_india
+  All columns  : city | state | latitude | longitude | datetime | month | day_name | is_weekend | season | time_of_day | humidity_percent
+
+  File         : INDIA_AQI_COMPLETE_20251126.csv
+  Source       : Unknown
+  Size         : 276003.5 KB
+  Shape        : 842,160 rows x 71 cols
+  Date range   : N/A
+  Cities       : 29 unique (Agartala, Ahmedabad, Aizawl, Bengaluru...)
+  Stations     : N/A
+  States       : 29 unique
+  AQI range    : N/A
+  Missing avg  : 11.3%
+  Sentinel 999 : YES — needs cleaning
+  Pollutants   : PM2_5_ugm3, PM10_ugm3, NO2_ugm3, SO2_ugm3, O3_ugm3, NH3_ugm3, US_AQI_PM25, US_AQI_PM10, US_AQI_NO2, US_AQI_O3, EU_AQI_PM25, EU_AQI_PM10, PM25_Category_India
+  All columns  : City | State | Latitude | Longitude | Datetime | Year | Month | Day | Hour | Day_of_Week | Day_Name | Week_of_Year | Is_
+
+───────────────────────────────────────────────────────────────────────────
+  SCHEMA: WEATHER_PM25 — LOW — only PM2.5 + weather, missing 5 of 6 pollutants
+───────────────────────────────────────────────────────────────────────────
+
+  File         : AQI Data.csv
+  Source       : Kaggle: jimschacko/bangalore-5-year-aqi-data
+  Size         : 60.6 KB
+  Shape        : 2,192 rows x 9 cols
+  Date range   : N/A
+  Cities       : N/A
+  Stations     : N/A
+  States       : N/A
+  AQI range    : N/A
+  Missing avg  : 50.0%
+  Sentinel 999 : YES — needs cleaning
+  Pollutants   : None detected
+  All columns  : T | TM | Tm | SLP | H | VV | V | VM | PM 2.5
+
+───────────────────────────────────────────────────────────────────────────
+  SCHEMA: UNKNOWN_AQ — REVIEW — has some AQ data, schema unclear
+───────────────────────────────────────────────────────────────────────────
+
+  File         : bengaluru_combined.csv
+  Source       : Kaggle: rajanbhateja/indian-cities-aqi-2020-2024
+  Size         : 129.7 KB
+  Shape        : 1,827 rows x 9 cols
+  Date range   : N/A
+  Cities       : N/A
+  Stations     : 1 unique
+  States       : N/A
+  AQI range    : N/A
+  Missing avg  : 4.5%
+  Sentinel 999 : No
+  Pollutants   : PM2.5, PM10, NO2, NH3, SO2, O3
+  All columns  : Timestamp | Location | PM2.5 | PM10 | NO2 | NH3 | SO2 | CO | O3
+
+  File         : NehruNagar_Hourly.csv
+  Source       : Unknown
+  Size         : 1343.1 KB
+  Shape        : 11,705 rows x 21 cols
+  Date range   : N/A
+  Cities       : N/A
+  Stations     : N/A
+  States       : N/A
+  AQI range    : N/A
+  Missing avg  : 0.0%
+  Sentinel 999 : YES — needs cleaning
+  Pollutants   : PM2.5, PM10, NO2, SO2, Ozone, Benzene, NH3, NOx
+  All columns  : Unnamed: 0 | PM2.5 | year | month | day | hour | PM10 | AT | BP | SR | RH | WS | WD | NO | NO2 | SO2 | Ozone | CO | Benz
+
+  File         : DwarkaSec8_Hourly.csv
+  Source       : Unknown
+  Size         : 1337.1 KB
+  Shape        : 11,704 rows x 21 cols
+  Date range   : N/A
+  Cities       : N/A
+  Stations     : N/A
+  States       : N/A
+  AQI range    : N/A
+  Missing avg  : 0.0%
+  Sentinel 999 : YES — needs cleaning
+  Pollutants   : PM2.5, PM10, NO2, SO2, Ozone, Benzene, NH3, NOx
+  All columns  : Unnamed: 0 | PM2.5 | year | month | day | hour | PM10 | AT | BP | SR | RH | WS | WD | NO | NO2 | SO2 | Ozone | CO | Benz
+
+  File         : AshokVihar_Hourly.csv
+  Source       : Unknown
+  Size         : 1321.9 KB
+  Shape        : 11,705 rows x 21 cols
+  Date range   : N/A
+  Cities       : N/A
+  Stations     : N/A
+  States       : N/A
+  AQI range    : N/A
+  Missing avg  : 0.0%
+  Sentinel 999 : YES — needs cleaning
+  Pollutants   : PM2.5, PM10, NO2, SO2, Ozone, Benzene, NH3, NOx
+  All columns  : Unnamed: 0 | PM2.5 | year | month | day | hour | PM10 | AT | BP | SR | RH | WS | WD | NO | NO2 | SO2 | Ozone | CO | Benz
+
+  File         : Okhla_Hourly.csv
+  Source       : Unknown
+  Size         : 1325.7 KB
+  Shape        : 11,705 rows x 21 cols
+  Date range   : N/A
+  Cities       : N/A
+  Stations     : N/A
+  States       : N/A
+  AQI range    : N/A
+  Missing avg  : 0.0%
+  Sentinel 999 : YES — needs cleaning
+  Pollutants   : PM2.5, PM10, NO2, SO2, Ozone, Benzene, NH3, NOx
+  All columns  : Unnamed: 0 | PM2.5 | year | month | day | hour | PM10 | AT | BP | SR | RH | WS | WD | NO | NO2 | SO2 | Ozone | CO | Benz
+
+  File         : Najafgarh_Hourly.csv
+  Source       : Unknown
+  Size         : 1329.1 KB
+  Shape        : 11,704 rows x 21 cols
+  Date range   : N/A
+  Cities       : N/A
+  Stations     : N/A
+  States       : N/A
+  AQI range    : N/A
+  Missing avg  : 0.0%
+  Sentinel 999 : YES — needs cleaning
+  Pollutants   : PM2.5, PM10, NO2, SO2, Ozone, Benzene, NH3, NOx
+  All columns  : Unnamed: 0 | PM2.5 | year | month | day | hour | PM10 | AT | BP | SR | RH | WS | WD | NO | NO2 | SO2 | Ozone | CO | Benz
+
+  File         : DCStadium_Hourly.csv
+  Source       : Unknown
+  Size         : 1334.8 KB
+  Shape        : 11,704 rows x 21 cols
+  Date range   : N/A
+  Cities       : N/A
+  Stations     : N/A
+  States       : N/A
+  AQI range    : N/A
+  Missing avg  : 0.0%
+  Sentinel 999 : YES — needs cleaning
+  Pollutants   : PM2.5, PM10, NO2, SO2, Ozone, Benzene, NH3, NOx
+  All columns  : Unnamed: 0 | PM2.5 | year | month | day | hour | PM10 | AT | BP | SR | RH | WS | WD | NO | NO2 | SO2 | Ozone | CO | Benz
+
+  File         : air-quality-india.csv
+  Source       : Kaggle: fedesoriano/air-quality-data-in-india
+  Size         : 1394.8 KB
+  Shape        : 36,192 rows x 6 cols
+  Date range   : N/A
+  Cities       : N/A
+  Stations     : N/A
+  States       : N/A
+  AQI range    : N/A
+  Missing avg  : 0.0%
+  Sentinel 999 : No
+  Pollutants   : PM2.5
+  All columns  : Timestamp | Year | Month | Day | Hour | PM2.5
+
+  File         : delhi-weather-aqi-2025.csv
+  Source       : Kaggle: sohails07/delhi-weather-and-aqi-dataset-2025
+  Size         : 5581.7 KB
+  Shape        : 52,560 rows x 16 cols
+  Date range   : N/A
+  Cities       : N/A
+  Stations     : 6 unique
+  States       : N/A
+  AQI range    : N/A
+  Missing avg  : 0.0%
+  Sentinel 999 : YES — needs cleaning
+  Pollutants   : pm2_5, pm10, no2
+  All columns  : date_ist | time_ist | location | lat | lon | temp_c | humidity | pressure_mb | windspeed_kph | condition_text | descript
+
+───────────────────────────────────────────────────────────────────────────
+  SCHEMA: IRRELEVANT — SKIP — no air quality data
+───────────────────────────────────────────────────────────────────────────
+
+  File         : data_aqi_cpcb.csv
+  Source       : Unknown
+  Size         : 482.5 KB
+  Shape        : 31 rows x 6011 cols
+  Date range   : N/A
+  Cities       : N/A
+  Stations     : N/A
+  States       : N/A
+  AQI range    : N/A
+  Missing avg  : 91.6%
+  Sentinel 999 : No
+  Pollutants   : None detected
+  All columns  : City/0/Station/0/Pollutant_Index/0/_id | City/0/Station/0/Pollutant_Index/0/_Min | City/0/Station/0/Pollutant_Index/0/_M
+
+===========================================================================
+  WHAT YOU HAVE vs WHAT YOU NEED FOR VAYU
+===========================================================================
+
+  TARGET: Predictive Modeling (AQI regression + classification)
+          + Unsupervised Clustering of Indian Urban Centres
+
+  REQUIREMENT                         STATUS
+  ─────────────────────────────────── ──────────────────────────────────
+  Raw pollutant readings              CAAQMS_HOURLY files (AP*.csv etc.)
+  (PM2.5, PM10, NO2, SO2, CO, O3)
+
+  AQI as target variable              REALTIME_WIDE (Dataset_AQI*.xlsx)
+  (numeric + category)                Also computable from CAAQMS files
+
+  Multiple cities for clustering      AQI_BULLETIN files (296 cities)
+                                      + LONG_FORMAT (pan-India snapshot)
+
+  Temporal coverage (dates)           2015–2026 across different files
+
+  Geographic coverage                 Pan-India: 138+ cities, all states
+
+  GAPS
+  ─────────────────────────────────── ──────────────────────────────────
+  NH3 data                            Only in CAAQMS files, not bulletins
+  Station-level coordinates           Only in LONG_FORMAT + REALTIME_WIDE
+  Consistent granularity              CAAQMS=hourly, bulletins=daily
