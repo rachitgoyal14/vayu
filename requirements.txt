@@ -6,3 +6,4 @@ pillow
 imblearn
 scikit-learn
 seaborn
+statsmodels
