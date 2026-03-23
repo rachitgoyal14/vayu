@@ -1,5 +1,5 @@
 ===========================================================================
-  VAYU — FULL DATA ANALYSIS REPORT
+  VAYU - FULL DATA ANALYSIS REPORT
   Root: /Users/rachitgoyal/Desktop/vayu-sul/data
   Total files found: 299
 ===========================================================================
@@ -11,48 +11,48 @@
   [CAAQMS_HOURLY]
   Files : 1
   Rows  : 59,150
-  Use   : BEST for regression — raw pollutant readings, hourly, no AQI col (you compute it)
+  Use   : BEST for regression - raw pollutant readings, hourly, no AQI col (you compute it)
 
   [REALTIME_WIDE]
   Files : 5
   Rows  : 231,654
-  Use   : BEST for regression — has AQI + all pollutants already
+  Use   : BEST for regression - has AQI + all pollutants already
 
   [LONG_FORMAT]
   Files : 3
   Rows  : 9,792
-  Use   : GOOD — needs pivoting to wide, covers all states in one file
+  Use   : GOOD - needs pivoting to wide, covers all states in one file
 
   [AQI_BULLETIN]
   Files : 277
   Rows  : 299,972
-  Use   : GOOD for clustering — city-level daily AQI, no raw pollutants
+  Use   : GOOD for clustering - city-level daily AQI, no raw pollutants
 
   [MULTI_CITY_HIST]
   Files : 2
   Rows  : 1,684,320
-  Use   : MODERATE — multi-city, check if raw pollutants or just AQI
+  Use   : MODERATE - multi-city, check if raw pollutants or just AQI
 
   [WEATHER_PM25]
   Files : 1
   Rows  : 2,192
-  Use   : LOW — only PM2.5 + weather, missing 5 of 6 pollutants
+  Use   : LOW - only PM2.5 + weather, missing 5 of 6 pollutants
 
   [UNKNOWN_AQ]
   Files : 9
   Rows  : 160,806
-  Use   : REVIEW — has some AQ data, schema unclear
+  Use   : REVIEW - has some AQ data, schema unclear
 
   [IRRELEVANT]
   Files : 1
   Rows  : 31
-  Use   : SKIP — no air quality data
+  Use   : SKIP - no air quality data
 
   TOTAL USABLE ROWS (relevant schemas): 2,284,888
   FAILED TO READ: 0 files
 
 ───────────────────────────────────────────────────────────────────────────
-  SCHEMA: CAAQMS_HOURLY — BEST for regression — raw pollutant readings, hourly, no AQI col (you compute it)
+  SCHEMA: CAAQMS_HOURLY - BEST for regression - raw pollutant readings, hourly, no AQI col (you compute it)
 ───────────────────────────────────────────────────────────────────────────
 
   File         : AP001.csv
@@ -70,7 +70,7 @@
   All columns  : From Date | To Date | PM2.5 (ug/m3) | PM10 (ug/m3) | NO (ug/m3) | NO2 (ug/m3) | NOx (ppb) | NH3 (ug/m3) | SO2 (ug/m3) | 
 
 ───────────────────────────────────────────────────────────────────────────
-  SCHEMA: REALTIME_WIDE — BEST for regression — has AQI + all pollutants already
+  SCHEMA: REALTIME_WIDE - BEST for regression - has AQI + all pollutants already
 ───────────────────────────────────────────────────────────────────────────
 
   File         : delhi_ncr_aqi_dataset.csv
@@ -83,7 +83,7 @@
   States       : N/A
   AQI range    : 25 – 500 (mean 266)
   Missing avg  : 0.0%
-  Sentinel 999 : YES — needs cleaning
+  Sentinel 999 : YES - needs cleaning
   Pollutants   : pm25, pm10, no2, so2, o3
   All columns  : datetime | date | year | month | day | hour | day_of_week | is_weekend | season | city | station | latitude | longitude 
 
@@ -111,7 +111,7 @@
   States       : N/A
   AQI range    : 2 – 262 (mean 101)
   Missing avg  : 5.3%
-  Sentinel 999 : YES — needs cleaning
+  Sentinel 999 : YES - needs cleaning
   Pollutants   : PM2.5, PM10, O3, NO2, SO2
   All columns  : City | AQI | PM2.5 | PM10 | O3 | NO2 | SO2 | CO | Latitude | Longitude | Time
 
@@ -144,7 +144,7 @@
   All columns  : City | AQI | PM2.5 | PM10 | O3 | NO2 | SO2 | CO | Latitude | Longitude | Time
 
 ───────────────────────────────────────────────────────────────────────────
-  SCHEMA: LONG_FORMAT — GOOD — needs pivoting to wide, covers all states in one file
+  SCHEMA: LONG_FORMAT - GOOD - needs pivoting to wide, covers all states in one file
 ───────────────────────────────────────────────────────────────────────────
 
   File         : AQI.csv
@@ -190,7 +190,7 @@
   All columns  : country | state | city | station | last_update | latitude | longitude | pollutant_id | pollutant_min | pollutant_max | p
 
 ───────────────────────────────────────────────────────────────────────────
-  SCHEMA: AQI_BULLETIN — GOOD for clustering — city-level daily AQI, no raw pollutants
+  SCHEMA: AQI_BULLETIN - GOOD for clustering - city-level daily AQI, no raw pollutants
 ───────────────────────────────────────────────────────────────────────────
 
   File         : Chhapra_AQIBulletins.csv
@@ -4072,7 +4072,7 @@
   All columns  : date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant
 
 ───────────────────────────────────────────────────────────────────────────
-  SCHEMA: MULTI_CITY_HIST — MODERATE — multi-city, check if raw pollutants or just AQI
+  SCHEMA: MULTI_CITY_HIST - MODERATE - multi-city, check if raw pollutants or just AQI
 ───────────────────────────────────────────────────────────────────────────
 
   File         : aqi_india_38cols_knn_final.csv
@@ -4085,7 +4085,7 @@
   States       : 29 unique
   AQI range    : N/A
   Missing avg  : 0.0%
-  Sentinel 999 : YES — needs cleaning
+  Sentinel 999 : YES - needs cleaning
   Pollutants   : pm2_5_ugm3, pm10_ugm3, no2_ugm3, so2_ugm3, o3_ugm3, pm25_category_india
   All columns  : city | state | latitude | longitude | datetime | month | day_name | is_weekend | season | time_of_day | humidity_percent
 
@@ -4099,12 +4099,12 @@
   States       : 29 unique
   AQI range    : N/A
   Missing avg  : 11.3%
-  Sentinel 999 : YES — needs cleaning
+  Sentinel 999 : YES - needs cleaning
   Pollutants   : PM2_5_ugm3, PM10_ugm3, NO2_ugm3, SO2_ugm3, O3_ugm3, NH3_ugm3, US_AQI_PM25, US_AQI_PM10, US_AQI_NO2, US_AQI_O3, EU_AQI_PM25, EU_AQI_PM10, PM25_Category_India
   All columns  : City | State | Latitude | Longitude | Datetime | Year | Month | Day | Hour | Day_of_Week | Day_Name | Week_of_Year | Is_
 
 ───────────────────────────────────────────────────────────────────────────
-  SCHEMA: WEATHER_PM25 — LOW — only PM2.5 + weather, missing 5 of 6 pollutants
+  SCHEMA: WEATHER_PM25 - LOW - only PM2.5 + weather, missing 5 of 6 pollutants
 ───────────────────────────────────────────────────────────────────────────
 
   File         : AQI Data.csv
@@ -4117,12 +4117,12 @@
   States       : N/A
   AQI range    : N/A
   Missing avg  : 50.0%
-  Sentinel 999 : YES — needs cleaning
+  Sentinel 999 : YES - needs cleaning
   Pollutants   : None detected
   All columns  : T | TM | Tm | SLP | H | VV | V | VM | PM 2.5
 
 ───────────────────────────────────────────────────────────────────────────
-  SCHEMA: UNKNOWN_AQ — REVIEW — has some AQ data, schema unclear
+  SCHEMA: UNKNOWN_AQ - REVIEW - has some AQ data, schema unclear
 ───────────────────────────────────────────────────────────────────────────
 
   File         : bengaluru_combined.csv
@@ -4149,7 +4149,7 @@
   States       : N/A
   AQI range    : N/A
   Missing avg  : 0.0%
-  Sentinel 999 : YES — needs cleaning
+  Sentinel 999 : YES - needs cleaning
   Pollutants   : PM2.5, PM10, NO2, SO2, Ozone, Benzene, NH3, NOx
   All columns  : Unnamed: 0 | PM2.5 | year | month | day | hour | PM10 | AT | BP | SR | RH | WS | WD | NO | NO2 | SO2 | Ozone | CO | Benz
 
@@ -4163,7 +4163,7 @@
   States       : N/A
   AQI range    : N/A
   Missing avg  : 0.0%
-  Sentinel 999 : YES — needs cleaning
+  Sentinel 999 : YES - needs cleaning
   Pollutants   : PM2.5, PM10, NO2, SO2, Ozone, Benzene, NH3, NOx
   All columns  : Unnamed: 0 | PM2.5 | year | month | day | hour | PM10 | AT | BP | SR | RH | WS | WD | NO | NO2 | SO2 | Ozone | CO | Benz
 
@@ -4177,7 +4177,7 @@
   States       : N/A
   AQI range    : N/A
   Missing avg  : 0.0%
-  Sentinel 999 : YES — needs cleaning
+  Sentinel 999 : YES - needs cleaning
   Pollutants   : PM2.5, PM10, NO2, SO2, Ozone, Benzene, NH3, NOx
   All columns  : Unnamed: 0 | PM2.5 | year | month | day | hour | PM10 | AT | BP | SR | RH | WS | WD | NO | NO2 | SO2 | Ozone | CO | Benz
 
@@ -4191,7 +4191,7 @@
   States       : N/A
   AQI range    : N/A
   Missing avg  : 0.0%
-  Sentinel 999 : YES — needs cleaning
+  Sentinel 999 : YES - needs cleaning
   Pollutants   : PM2.5, PM10, NO2, SO2, Ozone, Benzene, NH3, NOx
   All columns  : Unnamed: 0 | PM2.5 | year | month | day | hour | PM10 | AT | BP | SR | RH | WS | WD | NO | NO2 | SO2 | Ozone | CO | Benz
 
@@ -4205,7 +4205,7 @@
   States       : N/A
   AQI range    : N/A
   Missing avg  : 0.0%
-  Sentinel 999 : YES — needs cleaning
+  Sentinel 999 : YES - needs cleaning
   Pollutants   : PM2.5, PM10, NO2, SO2, Ozone, Benzene, NH3, NOx
   All columns  : Unnamed: 0 | PM2.5 | year | month | day | hour | PM10 | AT | BP | SR | RH | WS | WD | NO | NO2 | SO2 | Ozone | CO | Benz
 
@@ -4219,7 +4219,7 @@
   States       : N/A
   AQI range    : N/A
   Missing avg  : 0.0%
-  Sentinel 999 : YES — needs cleaning
+  Sentinel 999 : YES - needs cleaning
   Pollutants   : PM2.5, PM10, NO2, SO2, Ozone, Benzene, NH3, NOx
   All columns  : Unnamed: 0 | PM2.5 | year | month | day | hour | PM10 | AT | BP | SR | RH | WS | WD | NO | NO2 | SO2 | Ozone | CO | Benz
 
@@ -4247,12 +4247,12 @@
   States       : N/A
   AQI range    : N/A
   Missing avg  : 0.0%
-  Sentinel 999 : YES — needs cleaning
+  Sentinel 999 : YES - needs cleaning
   Pollutants   : pm2_5, pm10, no2
   All columns  : date_ist | time_ist | location | lat | lon | temp_c | humidity | pressure_mb | windspeed_kph | condition_text | descript
 
 ───────────────────────────────────────────────────────────────────────────
-  SCHEMA: IRRELEVANT — SKIP — no air quality data
+  SCHEMA: IRRELEVANT - SKIP - no air quality data
 ───────────────────────────────────────────────────────────────────────────
 
   File         : data_aqi_cpcb.csv

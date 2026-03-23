@@ -4,7 +4,7 @@
        Ambient Air Quality Across Indian Urban Centres
        Using CPCB Sensor Data
 ============================================================
- STEP 1 — EDA + DATA CLEANING PIPELINE
+ STEP 1 - EDA + DATA CLEANING PIPELINE
 ============================================================
 """
 
@@ -24,7 +24,7 @@ plt.rcParams["figure.dpi"] = 120
 # 1. LOAD DATA
 # ═══════════════════════════════════════════════════════════
 print("=" * 60)
-print("  VAYU — Data Cleaning Pipeline")
+print("  VAYU - Data Cleaning Pipeline")
 print("=" * 60)
 
 RAW_PATH = r"C:\Users\Rahul kumar goyal\OneDrive\Documents\SUL_Project\files\3b01bcb8-0b14-4abf-b6f2-c1bfd384ba69.csv"   # ← update if needed
@@ -366,7 +366,7 @@ if not pm25.empty:
                       .reset_index())
     fig, ax = plt.subplots(figsize=(8, 4))
     sns.barplot(data=top_cities, x="pollutant_avg", y="city", ax=ax, palette="Reds_r")
-    ax.set_title("Top 10 Most Polluted Cities — PM2.5 Avg")
+    ax.set_title("Top 10 Most Polluted Cities - PM2.5 Avg")
     ax.set_xlabel("Average PM2.5 (μg/m³)")
     plt.tight_layout()
     plt.savefig(r"C:\Users\Rahul kumar goyal\OneDrive\Documents\SUL_Project\files\vayu_eda_top_pm25_cities.png")
@@ -376,7 +376,7 @@ if not pm25.empty:
 # ── D. Boxplot per pollutant ─────────────────────────────
 fig, ax = plt.subplots(figsize=(10, 5))
 sns.boxplot(data=df, x="pollutant_id", y="pollutant_avg", palette="Set2", ax=ax)
-ax.set_title("Pollutant Avg Concentration — Boxplot")
+ax.set_title("Pollutant Avg Concentration - Boxplot")
 ax.set_xlabel("Pollutant")
 ax.set_ylabel("Avg Concentration")
 plt.tight_layout()
@@ -422,11 +422,11 @@ for c in df.columns:
 # ═══════════════════════════════════════════════════════════
 df.to_csv(CLEAN_PATH, index=False)
 print(f"\n[15] Cleaned data saved → '{CLEAN_PATH}'")
-print("\n  ✅ Pipeline complete — ready for ML / clustering!\n")
+print("\n  ✅ Pipeline complete - ready for ML / clustering!\n")
 
 
 # ╔═══════════════════════════════════════════════════════════╗
-# ║           PHASE 2 — MODEL TRAINING                       ║
+# ║           PHASE 2 - MODEL TRAINING                       ║
 # ║   Topics: Linear Regression, Multiple Linear Regression, ║
 # ║   Polynomial Regression, Logistic Regression,            ║
 # ║   Gradient Descent, Evaluation Metrics                   ║
@@ -448,7 +448,7 @@ warnings.filterwarnings("ignore")
 OUTPUT_DIR = r"C:\Users\Rahul kumar goyal\OneDrive\Documents\SUL_Project\files"
 
 print("\n" + "═" * 60)
-print("  PHASE 2 — MODEL TRAINING")
+print("  PHASE 2 - MODEL TRAINING")
 print("═" * 60)
 
 
@@ -520,7 +520,7 @@ x_line = np.linspace(X_te.min().values[0], X_te.max().values[0], 200).reshape(-1
 ax.plot(x_line, slr.predict(x_line), color="red", linewidth=2, label="Best Fit Line")
 ax.set_xlabel("Pollutant Min")
 ax.set_ylabel("Pollutant Avg")
-ax.set_title("Simple Linear Regression — Best Fit Line")
+ax.set_title("Simple Linear Regression - Best Fit Line")
 ax.legend()
 plt.tight_layout()
 plt.savefig(OUTPUT_DIR + r"\vayu_slr_bestfit.png")
@@ -561,7 +561,7 @@ ax.plot([y_te.min(), y_te.max()], [y_te.min(), y_te.max()],
         "r--", linewidth=2, label="Perfect Prediction")
 ax.set_xlabel("Actual Pollutant Avg")
 ax.set_ylabel("Predicted Pollutant Avg")
-ax.set_title("Multiple Linear Regression — Actual vs Predicted")
+ax.set_title("Multiple Linear Regression - Actual vs Predicted")
 ax.legend()
 plt.tight_layout()
 plt.savefig(OUTPUT_DIR + r"\vayu_mlr_actual_vs_pred.png")
@@ -576,7 +576,7 @@ coef_df = pd.DataFrame({
 
 fig, ax = plt.subplots(figsize=(8, 5))
 sns.barplot(data=coef_df, x="Coefficient", y="Feature", palette="coolwarm", ax=ax)
-ax.set_title("Top 10 Feature Coefficients — Multiple Linear Regression")
+ax.set_title("Top 10 Feature Coefficients - Multiple Linear Regression")
 plt.tight_layout()
 plt.savefig(OUTPUT_DIR + r"\vayu_mlr_coefficients.png")
 plt.close()
@@ -635,7 +635,7 @@ print("  → Saved: vayu_poly_regression.png")
 #    Manual demonstration of how loss reduces over iterations
 # ═══════════════════════════════════════════════════════════
 print("\n" + "─" * 60)
-print("[D] Gradient Descent  (SGDRegressor — loss vs iterations)")
+print("[D] Gradient Descent  (SGDRegressor - loss vs iterations)")
 print("─" * 60)
 
 scaler = StandardScaler()
@@ -664,7 +664,7 @@ fig, ax = plt.subplots(figsize=(8, 4))
 ax.plot(range(1, 101), losses, color="crimson", linewidth=2)
 ax.set_xlabel("Epoch (Iteration)")
 ax.set_ylabel("MSE Loss")
-ax.set_title("Gradient Descent — Loss vs Iterations")
+ax.set_title("Gradient Descent - Loss vs Iterations")
 ax.fill_between(range(1, 101), losses, alpha=0.1, color="crimson")
 plt.tight_layout()
 plt.savefig(OUTPUT_DIR + r"\vayu_gradient_descent_loss.png")
@@ -728,7 +728,7 @@ cm = confusion_matrix(y_te, y_pred_clf)
 fig, ax = plt.subplots(figsize=(8, 6))
 disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=le.classes_)
 disp.plot(ax=ax, cmap="Blues", colorbar=False)
-ax.set_title("Logistic Regression — Confusion Matrix (AQI Category)")
+ax.set_title("Logistic Regression - Confusion Matrix (AQI Category)")
 plt.xticks(rotation=30, ha="right")
 plt.tight_layout()
 plt.savefig(OUTPUT_DIR + r"\vayu_logistic_confusion_matrix.png")
@@ -745,7 +745,7 @@ ax.axhline(0.5, color="gray", linestyle="--", linewidth=1)
 ax.axvline(0,   color="gray", linestyle="--", linewidth=1)
 ax.set_xlabel("z  (linear combination of features)")
 ax.set_ylabel("σ(z)  =  1 / (1 + e⁻ᶻ)")
-ax.set_title("Sigmoid Function — Used in Logistic Regression")
+ax.set_title("Sigmoid Function - Used in Logistic Regression")
 ax.fill_between(z, sigmoid, 0.5, where=(sigmoid > 0.5), alpha=0.15, color="green", label="Predict Class 1")
 ax.fill_between(z, sigmoid, 0.5, where=(sigmoid < 0.5), alpha=0.15, color="red",   label="Predict Class 0")
 ax.legend()
@@ -797,7 +797,7 @@ print("  ✅ All plots saved to your files folder.")
 #    Just change the values below and run the script!
 # ═══════════════════════════════════════════════════════════
 print("\n" + "═" * 60)
-print("  PHASE 3 — AQI PREDICTION FOR NEW PLACE")
+print("  PHASE 3 - AQI PREDICTION FOR NEW PLACE")
 print("═" * 60)
 
 # ──────────────────────────────────────────────────────────
@@ -915,12 +915,12 @@ for ax, (label, p_min, p_max) in zip(axes, [("Pm2.5", PM25_MIN, PM25_MAX),
     bar_colors = [colors.get(c, "gray") for c in prob_df["AQI Category"]]
     ax.barh(prob_df["AQI Category"], prob_df["Probability %"], color=bar_colors)
     ax.set_xlabel("Probability %")
-    ax.set_title(f"{PLACE_NAME} — {label.upper()} AQI Prediction")
+    ax.set_title(f"{PLACE_NAME} - {label.upper()} AQI Prediction")
     ax.set_xlim(0, 100)
     for i, v in enumerate(prob_df["Probability %"]):
         ax.text(v + 1, i, f"{v}%", va="center", fontsize=9)
 
-plt.suptitle(f"AQI Category Probabilities — {PLACE_NAME}", fontsize=13)
+plt.suptitle(f"AQI Category Probabilities - {PLACE_NAME}", fontsize=13)
 plt.tight_layout()
 plt.savefig(OUTPUT_DIR + r"\vayu_aqi_prediction.png")
 plt.close()

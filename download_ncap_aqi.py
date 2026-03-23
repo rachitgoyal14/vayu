@@ -1,6 +1,6 @@
 """
 Download all India NCAP AQI CSV files from urbanemissions.info
-Run this script from any folder — CSVs will be saved in the same directory.
+Run this script from any folder - CSVs will be saved in the same directory.
 """
 
 import os
@@ -100,7 +100,7 @@ def download_all():
 
         time.sleep(0.3)  # be polite to the server
 
-    print(f"\n✅ Done — {success}/{total} downloaded successfully.")
+    print(f"\n✅ Done - {success}/{total} downloaded successfully.")
     if failed:
         print(f"❌ {len(failed)} failed: {', '.join(failed)}")
 

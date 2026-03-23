@@ -40,7 +40,7 @@ for fp in sorted(all_files):
            not any(k in col_str for k in BULLETIN_KEYWORDS):      reasons.append('no pollutant or AQI columns')
         if not any(k in col_str for k in ['date','time','city']): reasons.append('no date or city column')
         if any(k in col_str for k in PRIMARY_REQUIRED) and len(df) < 100000:
-                                                                  reasons.append(f'has pollutants but only {len(df)} rows — likely a sample/subset')
+                                                                  reasons.append(f'has pollutants but only {len(df)} rows - likely a sample/subset')
         if not reasons:                                           reasons.append('schema does not match any expected format')
 
         results.append({

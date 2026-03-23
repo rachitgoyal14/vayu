@@ -1,4 +1,4 @@
-# VAYU — Data Preparation Roadmap
+# VAYU - Data Preparation Roadmap
 
 **Project:** Predictive Modeling and Unsupervised Clustering of Ambient Air Quality Across Indian Urban Centres Using CPCB Sensor Data
 
@@ -25,12 +25,12 @@ data/
 
 | File | Job | Syllabus Lectures |
 |---|---|---|
-| `vayu_step1_setup.ipynb` | EDA — understand the raw data, no changes | 1–7 (prerequisite) |
-| `vayu_step2_cleaning.ipynb` | Clean — fix sentinels, validate ranges, fill gaps, save master | 42–45 |
-| `vayu_step3_regression.ipynb` | Build regression dataset — features, target, train/test split | 8–17 |
-| `vayu_step4_classification.ipynb` | Build classification dataset — encode target, handle imbalance | 18–24, 31–36 |
-| `vayu_step5_clustering.ipynb` | Build clustering dataset — city profiles from 277 bulletin files | 55–56 |
-| `vayu_step6_dimensionality.ipynb` | Build dimensionality dataset — standardize pollutant matrix | 46–54 |
+| `vayu_step1_setup.ipynb` | EDA - understand the raw data, no changes | 1–7 (prerequisite) |
+| `vayu_step2_cleaning.ipynb` | Clean - fix sentinels, validate ranges, fill gaps, save master | 42–45 |
+| `vayu_step3_regression.ipynb` | Build regression dataset - features, target, train/test split | 8–17 |
+| `vayu_step4_classification.ipynb` | Build classification dataset - encode target, handle imbalance | 18–24, 31–36 |
+| `vayu_step5_clustering.ipynb` | Build clustering dataset - city profiles from 277 bulletin files | 55–56 |
+| `vayu_step6_dimensionality.ipynb` | Build dimensionality dataset - standardize pollutant matrix | 46–54 |
 
 ---
 
@@ -38,7 +38,7 @@ data/
 
 ---
 
-### Step 1 — `vayu_step1_setup.ipynb`
+### Step 1 - `vayu_step1_setup.ipynb`
 **Purpose:** Exploratory Data Analysis. Look at the data without modifying anything.
 
 **What it does:**
@@ -59,12 +59,12 @@ data/
 
 ---
 
-### Step 2 — `vayu_step2_cleaning.ipynb`
+### Step 2 - `vayu_step2_cleaning.ipynb`
 **Purpose:** Clean the primary dataset and save a master file. All subsequent notebooks read from this master.
 
 **What it does:**
 - Replaces sentinel value 999 with NaN across all pollutant columns
-- Applies physical range validation — readings outside physically possible limits are nulled:
+- Applies physical range validation - readings outside physically possible limits are nulled:
   - PM2.5 > 1000 µg/m³ → NaN
   - PM10 > 1500 µg/m³ → NaN
   - NO2 > 500 µg/m³ → NaN
@@ -85,7 +85,7 @@ data/
 
 ---
 
-### Step 3 — `vayu_step3_regression.ipynb`
+### Step 3 - `vayu_step3_regression.ipynb`
 **Purpose:** Prepare data specifically for Linear Regression and Multiple Regression (Lectures 8–17).
 
 **What it does:**
@@ -103,8 +103,8 @@ data/
 
 ---
 
-### Step 4 — `vayu_step4_classification.ipynb`
-**Purpose:** Prepare data for classification models — Logistic Regression, KNN, SVM, Decision Trees, Random Forest (Lectures 18–24, 31–36, 56–60).
+### Step 4 - `vayu_step4_classification.ipynb`
+**Purpose:** Prepare data for classification models - Logistic Regression, KNN, SVM, Decision Trees, Random Forest (Lectures 18–24, 31–36, 56–60).
 
 **What it does:**
 - Reads `master_cleaned.parquet`
@@ -120,13 +120,13 @@ data/
 
 ---
 
-### Step 5 — `vayu_step5_clustering.ipynb`
+### Step 5 - `vayu_step5_clustering.ipynb`
 **Purpose:** Prepare data for K-Means Clustering (Lectures 55–56). Uses the 277 bulletin files, not the primary dataset.
 
 **What it does:**
 - Reads and stacks all 277 `*_AQIBulletins.csv` files (one per city)
 - Aggregates to city-level features: mean AQI per season, AQI standard deviation, most common prominent pollutant
-- Standardizes all features (K-Means is distance-based — scale matters)
+- Standardizes all features (K-Means is distance-based - scale matters)
 - Runs the Elbow Method to find the optimal number of clusters (K)
 - Runs K-Means with the chosen K
 - Visualizes clusters using PCA for 2D projection
@@ -137,13 +137,13 @@ data/
 
 ---
 
-### Step 6 — `vayu_step6_dimensionality.ipynb`
+### Step 6 - `vayu_step6_dimensionality.ipynb`
 **Purpose:** Prepare data for PCA, t-SNE, and SVD (Lectures 46–54).
 
 **What it does:**
 - Reads `master_cleaned.parquet`
 - Extracts only the 6 pollutant columns (pure numeric matrix)
-- Standardizes using StandardScaler (PCA is variance-based — scale matters)
+- Standardizes using StandardScaler (PCA is variance-based - scale matters)
 - Runs PCA and shows explained variance ratio per component
 - Shows the cumulative variance plot to decide how many components to keep
 - Runs t-SNE on a 10,000-row sample (t-SNE is slow on full 842k rows)
@@ -164,7 +164,7 @@ This section explains what each model needs from the data and why, mapped to you
 ### Linear Regression + Multiple Regression
 **Syllabus:** Lectures 8–17
 
-**Target variable:** AQI — numeric, continuous (0–500)
+**Target variable:** AQI - numeric, continuous (0–500)
 
 **Features used:**
 
@@ -176,21 +176,21 @@ This section explains what each model needs from the data and why, mapped to you
 | SO2 | Industrial and coal burning emissions. Less weight in metros, more in industrial zones. |
 | CO | Combustion indicator. Correlated with vehicle density. |
 | O3 | Ground-level ozone. Inversely correlated with other pollutants in some seasons. |
-| month | Captures seasonality — pollution is higher in winter (Nov–Feb) due to meteorological factors. |
-| hour | Captures diurnal variation — pollution peaks at rush hours and drops at night. |
+| month | Captures seasonality - pollution is higher in winter (Nov–Feb) due to meteorological factors. |
+| hour | Captures diurnal variation - pollution peaks at rush hours and drops at night. |
 | day_of_week | Weekend vs weekday traffic and industrial activity differences. |
 
 **Features excluded:**
 
 | Feature | Why it is excluded |
 |---|---|
-| city (raw text) | Cannot be used directly in linear regression. Would need one-hot encoding which creates 29 dummy columns — included in classification but kept simple for regression. |
-| AQI_category | This is derived from AQI. Including it would be data leakage — the target is already embedded in this column. |
+| city (raw text) | Cannot be used directly in linear regression. Would need one-hot encoding which creates 29 dummy columns - included in classification but kept simple for regression. |
+| AQI_category | This is derived from AQI. Including it would be data leakage - the target is already embedded in this column. |
 | NH3, NOx, Benzene | Not available across all cities consistently. Including sparse columns introduces bias. |
 
 **Data requirements:**
 - No NaN values in any feature or target column
-- Features should be approximately normally distributed — log transform skewed columns
+- Features should be approximately normally distributed - log transform skewed columns
 - No multicollinearity: if two features have correlation > 0.85, consider dropping one
 - Train/test split: 80/20 stratified by city so all cities appear in both sets
 
@@ -199,7 +199,7 @@ This section explains what each model needs from the data and why, mapped to you
 ### Logistic Regression, KNN, SVM, Decision Trees, Random Forest
 **Syllabus:** Lectures 18–24, 31–36, 39–41, 56–60
 
-**Target variable:** AQI_category — categorical with 6 classes:
+**Target variable:** AQI_category - categorical with 6 classes:
 `Good, Satisfactory, Moderate, Poor, Very Poor, Severe`
 
 **Features used:** Same 6 pollutants + time features as regression, plus:
@@ -209,23 +209,23 @@ This section explains what each model needs from the data and why, mapped to you
 | city (encoded) | Classification models can handle encoded categoricals. City encodes geographic and industrial context. |
 | season | Explicit season label (Winter/Summer/Monsoon/Spring) is more interpretable than month number for tree-based models. |
 
-**Features excluded:** Same as regression, plus raw AQI numeric (would cause perfect prediction — direct data leakage).
+**Features excluded:** Same as regression, plus raw AQI numeric (would cause perfect prediction - direct data leakage).
 
 **Data requirements:**
 - Target must be integer-encoded (Good=0, Satisfactory=1, Moderate=2, Poor=3, Very Poor=4, Severe=5)
-- Features must be standardized for KNN and SVM (distance-based models — Lectures 31–32)
+- Features must be standardized for KNN and SVM (distance-based models - Lectures 31–32)
 - Features do NOT need to be standardized for Decision Trees and Random Forest (split-based)
-- Class imbalance must be checked — if Severe class is < 5% of data, use SMOTE or `class_weight='balanced'` (Lectures 39–41)
+- Class imbalance must be checked - if Severe class is < 5% of data, use SMOTE or `class_weight='balanced'` (Lectures 39–41)
 - Train/test split: 80/20 stratified by AQI_category so all classes appear in both sets
 
-**Why class imbalance matters here:** India's AQI data is dominated by Moderate and Poor readings. Good and Severe are rare. A naive model will learn to always predict Moderate and still get 60% accuracy — but it will never correctly identify the dangerous Severe days, which are the most important to predict correctly.
+**Why class imbalance matters here:** India's AQI data is dominated by Moderate and Poor readings. Good and Severe are rare. A naive model will learn to always predict Moderate and still get 60% accuracy - but it will never correctly identify the dangerous Severe days, which are the most important to predict correctly.
 
 ---
 
 ### K-Means Clustering
 **Syllabus:** Lectures 55–56
 
-**Target variable:** None — unsupervised
+**Target variable:** None - unsupervised
 
 **Input data:** City-level aggregated profile, one row per city
 
@@ -235,18 +235,18 @@ This section explains what each model needs from the data and why, mapped to you
 |---|---|
 | mean_AQI_winter | Average AQI in Nov–Feb. Differentiates northern plains cities from southern cities. |
 | mean_AQI_summer | Average AQI in Mar–May. Shows which cities have summer ozone problems. |
-| mean_AQI_monsoon | Average AQI in Jun–Sep. Monsoon suppresses pollution — low values here indicate meteorological sensitivity. |
+| mean_AQI_monsoon | Average AQI in Jun–Sep. Monsoon suppresses pollution - low values here indicate meteorological sensitivity. |
 | aqi_std | Standard deviation of daily AQI. High std = volatile air quality (event-driven, e.g. Diwali spikes). |
 | prominent_pm25_pct | Fraction of days where PM2.5 was the prominent pollutant. Indicates particulate-dominated cities. |
 | prominent_o3_pct | Fraction of days where O3 was prominent. Indicates ozone-dominated cities (usually southern). |
 
-**Source:** 277 AQI Bulletin files (one per city). NOT the primary dataset — bulletins cover more cities.
+**Source:** 277 AQI Bulletin files (one per city). NOT the primary dataset - bulletins cover more cities.
 
 **Data requirements:**
-- One row per city — no row-level data, only aggregated statistics
+- One row per city - no row-level data, only aggregated statistics
 - All features must be numeric
-- All features must be StandardScaler normalized — K-Means is distance-based, so a feature with a large range (e.g., AQI 0–500) will dominate over a small-range feature (e.g., a percentage 0–1)
-- No target column in the input — K-Means does not use labels
+- All features must be StandardScaler normalized - K-Means is distance-based, so a feature with a large range (e.g., AQI 0–500) will dominate over a small-range feature (e.g., a percentage 0–1)
+- No target column in the input - K-Means does not use labels
 
 **Why not use the primary file for clustering:** The primary file has only 29 cities. The bulletin files cover 277 cities, giving a much richer geographic picture of India's air quality landscape.
 
@@ -255,21 +255,21 @@ This section explains what each model needs from the data and why, mapped to you
 ### PCA, t-SNE, SVD
 **Syllabus:** Lectures 46–54
 
-**Target variable:** None — unsupervised dimensionality reduction
+**Target variable:** None - unsupervised dimensionality reduction
 
 **Input data:** Pure pollutant feature matrix from the primary file
 
-**Features used:** PM2.5, PM10, NO2, SO2, CO, O3 — the 6 raw pollutant concentrations only
+**Features used:** PM2.5, PM10, NO2, SO2, CO, O3 - the 6 raw pollutant concentrations only
 
 **Features excluded:** All time features, all categorical features, AQI, AQI_category
 
 **Data requirements:**
-- Purely numeric matrix — no text, no NaN, no categorical columns
+- Purely numeric matrix - no text, no NaN, no categorical columns
 - Must be StandardScaler normalized before PCA and t-SNE (both are variance/distance-based)
 - SVD can optionally be run on the raw matrix to understand explained variance
-- t-SNE is computationally expensive — run on a random sample of 10,000 rows from the full dataset
+- t-SNE is computationally expensive - run on a random sample of 10,000 rows from the full dataset
 
-**Why only the 6 pollutants:** PCA finds directions of maximum variance. Time features (hour, month) introduce variance that reflects data collection patterns rather than air quality patterns. We want the principal components to reflect pollutant co-occurrence patterns — which pollutants tend to be high together — not time patterns.
+**Why only the 6 pollutants:** PCA finds directions of maximum variance. Time features (hour, month) introduce variance that reflects data collection patterns rather than air quality patterns. We want the principal components to reflect pollutant co-occurrence patterns - which pollutants tend to be high together - not time patterns.
 
 **What to expect from PCA output:**
 - PC1 will likely explain ~50–60% of variance and will be a general "pollution level" axis
@@ -305,7 +305,7 @@ This section explains what each model needs from the data and why, mapped to you
 
 ---
 
-## Quick Reference — Which Step to Open for What
+## Quick Reference - Which Step to Open for What
 
 | You want to... | Open this notebook |
 |---|---|

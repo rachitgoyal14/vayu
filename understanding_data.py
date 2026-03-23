@@ -1,5 +1,5 @@
 """
-VAYU — Comprehensive Data Analysis Script
+VAYU - Comprehensive Data Analysis Script
 Reads ALL .csv and .xlsx files, identifies their schema type,
 and produces a full human-readable report.
 
@@ -25,7 +25,7 @@ pd.set_option("display.width", 120)
 DATA_ROOT = "./data"
 # ───────────────────────────────────────────────────────────────────────────
 
-# Known source mapping (partial — from what user provided)
+# Known source mapping (partial - from what user provided)
 KNOWN_SOURCES = {
     "kaggle-2015-o-2020.csv"   : "Kaggle: rohanrao/air-quality-data-in-india (2015–2020)",
     "AP001.csv"                : "Kaggle: abhisheksjha/time-series-air-quality-data (CAAQMS hourly)",
@@ -56,7 +56,7 @@ def try_read(fp, nrows=None):
                     continue
             return max(dfs, key=len) if dfs else None
 
-        # CSV — try encodings + delimiters
+        # CSV - try encodings + delimiters
         for enc in ["utf-8", "latin-1", "cp1252", "utf-16"]:
             for sep in [",", ";", "\t", "|"]:
                 try:
@@ -79,13 +79,13 @@ def detect_schema(df, filename):
     Returns (schema_code, schema_label, detail_dict)
 
     Schema codes:
-      CAAQMS_HOURLY    — Raw hourly sensor data, wide format (AP001 style)
-      REALTIME_WIDE    — Real-time snapshot, wide pollutants + AQI col (Dataset_AQI* style)
-      LONG_FORMAT      — One row per pollutant per station (pollutant_id column)
-      AQI_BULLETIN     — Daily city-level AQI bulletin (Air Quality + Index Value cols)
-      WEATHER_PM25     — Weather params + only PM2.5, no proper date
-      MULTI_CITY_HIST  — Multi-city historical with AQI and pollutant breakdowns
-      UNKNOWN          — Doesn't match any known pattern
+      CAAQMS_HOURLY    - Raw hourly sensor data, wide format (AP001 style)
+      REALTIME_WIDE    - Real-time snapshot, wide pollutants + AQI col (Dataset_AQI* style)
+      LONG_FORMAT      - One row per pollutant per station (pollutant_id column)
+      AQI_BULLETIN     - Daily city-level AQI bulletin (Air Quality + Index Value cols)
+      WEATHER_PM25     - Weather params + only PM2.5, no proper date
+      MULTI_CITY_HIST  - Multi-city historical with AQI and pollutant breakdowns
+      UNKNOWN          - Doesn't match any known pattern
     """
     cols = [c.strip().lower() for c in df.columns]
     cols_orig = list(df.columns)
@@ -239,14 +239,14 @@ all_files = (
 all_files = [f for f in all_files if "cleaned" not in f.lower()
              and "analysis" not in f.lower()]
 
-# Output buffer — write to file AND print
+# Output buffer - write to file AND print
 lines = []
 def log(s=""):
     lines.append(s)
     print(s)
 
 log("=" * 75)
-log("  VAYU — FULL DATA ANALYSIS REPORT")
+log("  VAYU - FULL DATA ANALYSIS REPORT")
 log(f"  Root: {os.path.abspath(DATA_ROOT)}")
 log(f"  Total files found: {len(all_files)}")
 log("=" * 75)
@@ -307,14 +307,14 @@ SCHEMA_ORDER = [
 ]
 
 RELEVANCE_NOTE = {
-    "CAAQMS_HOURLY"  : "BEST for regression — raw pollutant readings, hourly, no AQI col (you compute it)",
-    "REALTIME_WIDE"  : "BEST for regression — has AQI + all pollutants already",
-    "LONG_FORMAT"    : "GOOD — needs pivoting to wide, covers all states in one file",
-    "AQI_BULLETIN"   : "GOOD for clustering — city-level daily AQI, no raw pollutants",
-    "MULTI_CITY_HIST": "MODERATE — multi-city, check if raw pollutants or just AQI",
-    "WEATHER_PM25"   : "LOW — only PM2.5 + weather, missing 5 of 6 pollutants",
-    "UNKNOWN_AQ"     : "REVIEW — has some AQ data, schema unclear",
-    "IRRELEVANT"     : "SKIP — no air quality data",
+    "CAAQMS_HOURLY"  : "BEST for regression - raw pollutant readings, hourly, no AQI col (you compute it)",
+    "REALTIME_WIDE"  : "BEST for regression - has AQI + all pollutants already",
+    "LONG_FORMAT"    : "GOOD - needs pivoting to wide, covers all states in one file",
+    "AQI_BULLETIN"   : "GOOD for clustering - city-level daily AQI, no raw pollutants",
+    "MULTI_CITY_HIST": "MODERATE - multi-city, check if raw pollutants or just AQI",
+    "WEATHER_PM25"   : "LOW - only PM2.5 + weather, missing 5 of 6 pollutants",
+    "UNKNOWN_AQ"     : "REVIEW - has some AQ data, schema unclear",
+    "IRRELEVANT"     : "SKIP - no air quality data",
 }
 
 log()
@@ -348,7 +348,7 @@ for code in SCHEMA_ORDER:
 
     log()
     log("─" * 75)
-    log(f"  SCHEMA: {code} — {RELEVANCE_NOTE.get(code,'')}")
+    log(f"  SCHEMA: {code} - {RELEVANCE_NOTE.get(code,'')}")
     log("─" * 75)
 
     for fp, fname, df, stats, detail in group:
@@ -367,7 +367,7 @@ for code in SCHEMA_ORDER:
         log(f"  States       : {stats['states']}")
         log(f"  AQI range    : {stats['aqi_range']}")
         log(f"  Missing avg  : {stats['missing_pct']}%")
-        log(f"  Sentinel 999 : {'YES — needs cleaning' if stats['sentinel_999'] else 'No'}")
+        log(f"  Sentinel 999 : {'YES - needs cleaning' if stats['sentinel_999'] else 'No'}")
         log(f"  Pollutants   : {stats['pollutants']}")
         log(f"  All columns  : {detail['columns_raw'][:120]}")
 
@@ -424,6 +424,6 @@ with open("vayu_full_analysis.txt", "w", encoding="utf-8") as f:
 log()
 log("=" * 75)
 log("  SAVED")
-log("  vayu_schema_map.csv     — one row per file with schema + stats")
-log("  vayu_full_analysis.txt  — this full report as a text file")
+log("  vayu_schema_map.csv     - one row per file with schema + stats")
+log("  vayu_full_analysis.txt  - this full report as a text file")
 log("=" * 75)

@@ -1,4 +1,4 @@
-# VAYU — Complete Data Preparation Documentation
+# VAYU - Complete Data Preparation Documentation
 
 **Project:** Predictive Modeling and Unsupervised Clustering of Ambient Air Quality Across Indian Urban Centres Using CPCB Sensor Data
 
@@ -24,14 +24,14 @@
 - 842,160 rows across 29 Indian cities
 - Hourly data from 2015 to 2024
 - All 6 CPCB pollutants: PM2.5, PM10, NO2, SO2, CO, O3
-- Already KNN-imputed — 0% standard NaN before cleaning
-- Contains sentinel value 999 (CPCB code for sensor error) — requires cleaning
+- Already KNN-imputed - 0% standard NaN before cleaning
+- Contains sentinel value 999 (CPCB code for sensor error) - requires cleaning
 
 **Secondary source:** 277 `*_AQIBulletins.csv` files
 - One file per Indian city, daily AQI data
 - Covers 277 cities across all states
 - Schema: `date | City | No. Stations | Air Quality | Index Value | Prominent Pollutant`
-- No raw pollutant readings — only the final aggregated AQI value
+- No raw pollutant readings - only the final aggregated AQI value
 - Used exclusively for the clustering task (Step 5)
 
 **Total raw files scanned:** 299 (CSV + XLSX)
@@ -44,27 +44,27 @@
 
 | Schema | Files | Rows | Used For | Why Others Rejected |
 |---|---|---|---|---|
-| Multi-city Historical | 2 | 1,684,320 | Regression, Classification, Dimensionality | Primary source — all pollutants + long temporal coverage |
+| Multi-city Historical | 2 | 1,684,320 | Regression, Classification, Dimensionality | Primary source - all pollutants + long temporal coverage |
 | Real-time Wide | 5 | 231,654 | Validation / supplementary | Smaller coverage, some lack CO |
 | AQI Bulletin | 277 | 299,972 | Clustering | No raw pollutant readings |
 | Raw Hourly Sensor (CAAQMS) | 1 | 59,150 | Supplementary | Single station only |
 | Long Format | 3 | 9,792 | Not used in pipeline | Snapshot only, no temporal depth |
 | Weather + PM2.5 only | 1 | 2,192 | Rejected | 50% missing, no datetime column |
-| Malformed JSON export | 1 | 31 | Rejected | 31 rows × 6011 cols — broken export |
+| Malformed JSON export | 1 | 31 | Rejected | 31 rows × 6011 cols - broken export |
 
 ### Why `aqi_india_38cols_knn_final.csv` Was Chosen as Primary
 
-1. **Coverage:** 842,160 rows is the largest single file — enough for train/test splits without data starvation
-2. **Completeness:** Already KNN-imputed so 0% standard NaN — reduces cleaning complexity
+1. **Coverage:** 842,160 rows is the largest single file - enough for train/test splits without data starvation
+2. **Completeness:** Already KNN-imputed so 0% standard NaN - reduces cleaning complexity
 3. **Temporal depth:** 2015–2024 spans 9 years, capturing multiple seasonal cycles and long-term trends
 4. **Pollutant coverage:** All 6 CPCB pollutants present in a single file
 5. **City coverage:** 29 cities across north, south, east, and west India
 
 ### Why Bulletin Files Were Chosen for Clustering
 
-1. **Geographic breadth:** 277 cities vs 29 in the primary file — much richer geographic picture
-2. **Clean structure:** Every bulletin file has the same 6-column schema — easy to stack
-3. **Purpose fit:** Clustering needs one row per entity (city), not hourly rows — bulletins aggregate naturally to city-level profiles
+1. **Geographic breadth:** 277 cities vs 29 in the primary file - much richer geographic picture
+2. **Clean structure:** Every bulletin file has the same 6-column schema - easy to stack
+3. **Purpose fit:** Clustering needs one row per entity (city), not hourly rows - bulletins aggregate naturally to city-level profiles
 
 ---
 
@@ -78,7 +78,7 @@ vayu_step1_setup.ipynb
   ─ EDA: understand before touching
   ─ Column inventory, dtype check
   ─ Sentinel detection, coverage maps
-  ─ Output: nothing saved — observation only
+  ─ Output: nothing saved - observation only
         │
         ▼
 vayu_step2_cleaning.ipynb
@@ -127,7 +127,7 @@ vayu_step6_dimensionality.ipynb
 
 ---
 
-### Step 1 — `vayu_step1_setup.ipynb`
+### Step 1 - `vayu_step1_setup.ipynb`
 
 **Purpose:** Exploratory Data Analysis. Nothing is modified. This step builds understanding.
 
@@ -136,12 +136,12 @@ vayu_step6_dimensionality.ipynb
 - Creates the 5 output folders (`01_regression` through `04_shared`) with README files explaining what each folder is for, which source files feed it, and which files were rejected
 - Loads the primary dataset and prints every column with dtype and null count
 - Tags each column as POLLUTANT / TARGET / IDENTITY / DATETIME / OTHER using keyword matching
-- Detects and counts sentinel value 999 per column — this is the key diagnostic
+- Detects and counts sentinel value 999 per column - this is the key diagnostic
 - Plots geographic coverage: rows per city, imbalance ratio (red = city with too few rows for fair representation)
 - Plots temporal coverage: rows per year (checks for data gaps), rows per month with winter highlighted (Nov–Feb = peak pollution season)
-- Plots raw pollutant histograms with physical valid limits marked as red dashed lines — the sentinel 999 spike should be visible as a bar far to the right
+- Plots raw pollutant histograms with physical valid limits marked as red dashed lines - the sentinel 999 spike should be visible as a bar far to the right
 - Plots AQI and AQI_category distribution with class imbalance warning
-- Plots raw correlation heatmap — distorted by sentinels, shows baseline before cleaning
+- Plots raw correlation heatmap - distorted by sentinels, shows baseline before cleaning
 
 **Output:** Nothing saved. Only visual understanding.
 
@@ -149,17 +149,17 @@ vayu_step6_dimensionality.ipynb
 
 ---
 
-### Step 2 — `vayu_step2_cleaning.ipynb`
+### Step 2 - `vayu_step2_cleaning.ipynb`
 
 **Purpose:** Fix all data quality issues and produce the master cleaned file.
 
 **Operations performed in order:**
 
-**Operation 1 — Replace sentinel 999 → NaN**
+**Operation 1 - Replace sentinel 999 → NaN**
 
-CPCB's CAAQMS system records exactly 999 when a sensor fails or goes offline. This is confirmed by the pattern: values are always exactly 999 (not 998 or 1000), and they cluster at station reset times. PM2.5 of 999 µg/m³ is physically impossible — the highest ever recorded real reading in India was approximately 900 µg/m³ during severe Diwali pollution. We replace all 999 values across all numeric columns with NaN.
+CPCB's CAAQMS system records exactly 999 when a sensor fails or goes offline. This is confirmed by the pattern: values are always exactly 999 (not 998 or 1000), and they cluster at station reset times. PM2.5 of 999 µg/m³ is physically impossible - the highest ever recorded real reading in India was approximately 900 µg/m³ during severe Diwali pollution. We replace all 999 values across all numeric columns with NaN.
 
-**Operation 2 — Physical range validation**
+**Operation 2 - Physical range validation**
 
 Even after removing 999, sensors can malfunction and output values that are wrong but not exactly 999. Each pollutant has a physically grounded maximum:
 
@@ -174,58 +174,58 @@ Even after removing 999, sensors can malfunction and output values that are wron
 | O3 | µg/m³ | 300 | Above any recorded ambient level |
 | NH3 | µg/m³ | 400 | Industrial zone maximum |
 
-**Critical unit note for CO:** The primary file stores CO as `co_ugm3` (micrograms per cubic metre). The CPCB safe limit is 50 mg/m³. Since 1 mg = 1000 µg, the correct upper limit is 50,000 µg/m³ — not 50. Using 50 as the limit would null every valid CO reading. The code detects `ugm3` in the column name and applies the correct limit table automatically.
+**Critical unit note for CO:** The primary file stores CO as `co_ugm3` (micrograms per cubic metre). The CPCB safe limit is 50 mg/m³. Since 1 mg = 1000 µg, the correct upper limit is 50,000 µg/m³ - not 50. Using 50 as the limit would null every valid CO reading. The code detects `ugm3` in the column name and applies the correct limit table automatically.
 
-**Operation 3 — Forward fill short sensor gaps**
+**Operation 3 - Forward fill short sensor gaps**
 
 After nulling sentinel and invalid values, some rows have NaN for one or more pollutants. These NaNs come from short sensor dropouts (1–3 hours) where the sensor went offline briefly and then came back. Since pollutant concentrations change slowly over a few hours, it is reasonable to carry the last known reading forward for up to 3 consecutive missing values.
 
-We use `.ffill(limit=3)` applied within each city group separately — so Delhi readings never bleed into Mumbai. Gaps longer than 3 hours stay as NaN and are handled in the next step.
+We use `.ffill(limit=3)` applied within each city group separately - so Delhi readings never bleed into Mumbai. Gaps longer than 3 hours stay as NaN and are handled in the next step.
 
-**Operation 4 — Drop all-null rows**
+**Operation 4 - Drop all-null rows**
 
-Rows where every pollutant column is NaN after forward fill represent extended sensor outages that we cannot reliably fill. We drop these rows. Rows with NaN in only some pollutants are kept — the individual steps (regression, classification) handle remaining NaN in their own targeted way.
+Rows where every pollutant column is NaN after forward fill represent extended sensor outages that we cannot reliably fill. We drop these rows. Rows with NaN in only some pollutants are kept - the individual steps (regression, classification) handle remaining NaN in their own targeted way.
 
-**Operation 5 — Deduplicate**
+**Operation 5 - Deduplicate**
 
 CPCB data exported in overlapping date ranges can produce exact duplicate rows. We deduplicate on the combination of city + datetime, keeping the first occurrence.
 
-**Operation 6 — Parse datetime and extract time features**
+**Operation 6 - Parse datetime and extract time features**
 
 The datetime column is parsed using `pd.to_datetime`. The following features are extracted if not already present:
 
 | Feature | Range | Why Useful |
 |---|---|---|
 | `year` | 2015–2024 | Captures long-term trend (air quality improving or worsening over years) |
-| `month` | 1–12 | Captures seasonality — winter months have systematically higher AQI |
+| `month` | 1–12 | Captures seasonality - winter months have systematically higher AQI |
 | `day` | 1–31 | Day-of-month pattern |
-| `hour` | 0–23 | Diurnal pattern — rush hour peaks at 8–10 AM and 6–8 PM |
-| `day_of_week` | 0–6 | Weekly pattern — weekends have lower industrial and traffic emissions |
-| `season` | 4 values | Winter / Spring / Summer / Monsoon — explicit seasonal label for tree models |
+| `hour` | 0–23 | Diurnal pattern - rush hour peaks at 8–10 AM and 6–8 PM |
+| `day_of_week` | 0–6 | Weekly pattern - weekends have lower industrial and traffic emissions |
+| `season` | 4 values | Winter / Spring / Summer / Monsoon - explicit seasonal label for tree models |
 
-**Operation 7 — Derive AQI_category**
+**Operation 7 - Derive AQI_category**
 
 If a numeric AQI column exists, we derive the 6-class category using CPCB breakpoints. If a category column already exists, we standardize its string values (handle inconsistent casing like `Very  Poor` → `Very Poor`).
 
-**Result for primary dataset:** 0 rows were dropped. This is expected — the KNN-imputed file had no extended outages and no duplicates. The cleaning operations replaced values in-place (sentinel → NaN) rather than deleting rows.
+**Result for primary dataset:** 0 rows were dropped. This is expected - the KNN-imputed file had no extended outages and no duplicates. The cleaning operations replaced values in-place (sentinel → NaN) rather than deleting rows.
 
 **Output files:**
 
 | File | Size | Description |
 |---|---|---|
-| `04_shared/master_cleaned.parquet` | ~30 MB | Binary compressed — use this in Steps 3–6 |
+| `04_shared/master_cleaned.parquet` | ~30 MB | Binary compressed - use this in Steps 3–6 |
 | `04_shared/master_cleaned.csv` | ~150 MB | Human readable backup |
 | `04_shared/cleaning_log.csv` | <1 MB | Every operation logged with before/after row counts |
 
 ---
 
-### Step 3 — `vayu_step3_regression.ipynb`
+### Step 3 - `vayu_step3_regression.ipynb`
 
 **Purpose:** Build the dataset for Linear Regression and Multiple Regression.
 
 **Model:** Linear Regression, Multiple Regression *(Lectures 8–17)*
 
-**Target variable:** AQI — numeric, continuous, range 0–500
+**Target variable:** AQI - numeric, continuous, range 0–500
 
 **Features selected:**
 
@@ -237,7 +237,7 @@ If a numeric AQI column exists, we derive the 6-class category using CPCB breakp
 | SO2 | Pollutant | Coal burning. More weight in industrial cities. |
 | CO | Pollutant | Combustion indicator. Correlated with traffic density. |
 | O3 | Pollutant | Ground-level ozone. Adds independent signal in summer/south. |
-| month | Time | Captures seasonality — Jan readings are higher than July. |
+| month | Time | Captures seasonality - Jan readings are higher than July. |
 | hour | Time | Captures rush hour peaks. |
 | day_of_week | Time | Weekend vs weekday emissions differences. |
 
@@ -246,7 +246,7 @@ If a numeric AQI column exists, we derive the 6-class category using CPCB breakp
 | Feature | Reason |
 |---|---|
 | city (text) | Cannot use raw text in linear regression without encoding. Kept simple for regression. |
-| AQI_category | Derived from AQI — including it in features is direct data leakage. |
+| AQI_category | Derived from AQI - including it in features is direct data leakage. |
 | year | Would make the model extrapolate by year rather than by pollution level. |
 | season (text) | Captured by month already. Tree models in Step 4 use this. |
 | NH3, NOx | Not present consistently across all cities. |
@@ -254,29 +254,29 @@ If a numeric AQI column exists, we derive the 6-class category using CPCB breakp
 **Operations performed:**
 
 1. **Compute AQI** from pollutants using CPCB sub-index formula if not already present
-2. **Drop NaN rows** in any feature or target column — regression cannot handle NaN
-3. **Skewness check** per pollutant — features with skewness > 2.0 are right-skewed (long tail from pollution spikes). These are log-transformed using `log1p(x)` to bring them closer to normal
-4. **Multicollinearity check** — Pearson correlation matrix between all features. If `|r| > 0.85`, the two features are highly collinear and one should be dropped. VIF (Variance Inflation Factor) is computed where statsmodels is available
-5. **Winsorization** at the 99th percentile — values above the 99th percentile are capped at that value. This limits the influence of genuine but extreme pollution spikes on the regression line
+2. **Drop NaN rows** in any feature or target column - regression cannot handle NaN
+3. **Skewness check** per pollutant - features with skewness > 2.0 are right-skewed (long tail from pollution spikes). These are log-transformed using `log1p(x)` to bring them closer to normal
+4. **Multicollinearity check** - Pearson correlation matrix between all features. If `|r| > 0.85`, the two features are highly collinear and one should be dropped. VIF (Variance Inflation Factor) is computed where statsmodels is available
+5. **Winsorization** at the 99th percentile - values above the 99th percentile are capped at that value. This limits the influence of genuine but extreme pollution spikes on the regression line
 6. **Train/test split:** 80/20, stratified by city so all 29 cities appear in both sets
 
 **Output files:**
 
 | File | Description |
 |---|---|
-| `01_regression/regression_train.csv` | 80% of cleaned data — features + AQI target |
-| `01_regression/regression_test.csv` | 20% holdout — never used during training |
+| `01_regression/regression_train.csv` | 80% of cleaned data - features + AQI target |
+| `01_regression/regression_test.csv` | 20% holdout - never used during training |
 | `01_regression/feature_list.txt` | Exact column names to pass to the model, with notes on which were log-transformed |
 
 ---
 
-### Step 4 — `vayu_step4_classification.ipynb`
+### Step 4 - `vayu_step4_classification.ipynb`
 
 **Purpose:** Build the dataset for all classification models.
 
 **Models:** Logistic Regression, KNN, SVM, Decision Trees, Random Forest *(Lectures 18–24, 31–36, 56–60)*
 
-**Target variable:** `AQI_label` — integer 0–5 encoding of AQI_category
+**Target variable:** `AQI_label` - integer 0–5 encoding of AQI_category
 
 | Integer | Category | AQI Range |
 |---|---|---|
@@ -303,20 +303,20 @@ Same 6 pollutants as regression, plus:
 
 | Feature | Reason |
 |---|---|
-| AQI (numeric) | Direct data leakage — the target is derived from this column. Including it would give perfect accuracy. |
+| AQI (numeric) | Direct data leakage - the target is derived from this column. Including it would give perfect accuracy. |
 | AQI_category (string) | Same leakage issue as above. |
-| year | Not useful for prediction — would create spurious temporal trend fitting. |
+| year | Not useful for prediction - would create spurious temporal trend fitting. |
 | NH3, cloud_cover | NH3 absent in many rows; cloud_cover is weather, not a pollutant. |
 
 **Operations performed:**
 
-1. **Standardize AQI_category** — flexible mapping handles any casing or spacing variant (`very  poor`, `Very Poor`, `VERY POOR` all → `Very Poor`)
-2. **Drop NaN category rows** — rows that could not be mapped to a valid category are removed
-3. **Label encode city** — LabelEncoder converts city names to integers 0 to N-1. Mapping saved to `label_map.json`
-4. **Encode season** — text season to integer using fixed map
-5. **Drop all-NaN features** — if a feature column is entirely NaN (e.g., `season_enc` when `season` column doesn't exist in the file), it is removed from the feature list automatically before dropna runs. This prevents the silent "0 rows remain" failure
-6. **Train/test split:** 80/20, stratified by `AQI_label` — ensures all 6 classes appear in both sets
-7. **SMOTE oversampling** on training set only if imbalance ratio > 3x. Test set is never modified — it must reflect real-world class distribution for honest evaluation. SMOTE generates synthetic minority-class samples by interpolating between existing samples rather than duplicating
+1. **Standardize AQI_category** - flexible mapping handles any casing or spacing variant (`very  poor`, `Very Poor`, `VERY POOR` all → `Very Poor`)
+2. **Drop NaN category rows** - rows that could not be mapped to a valid category are removed
+3. **Label encode city** - LabelEncoder converts city names to integers 0 to N-1. Mapping saved to `label_map.json`
+4. **Encode season** - text season to integer using fixed map
+5. **Drop all-NaN features** - if a feature column is entirely NaN (e.g., `season_enc` when `season` column doesn't exist in the file), it is removed from the feature list automatically before dropna runs. This prevents the silent "0 rows remain" failure
+6. **Train/test split:** 80/20, stratified by `AQI_label` - ensures all 6 classes appear in both sets
+7. **SMOTE oversampling** on training set only if imbalance ratio > 3x. Test set is never modified - it must reflect real-world class distribution for honest evaluation. SMOTE generates synthetic minority-class samples by interpolating between existing samples rather than duplicating
 8. **StandardScaler** fitted on training set only, transforms both train and test. Two versions saved:
    - Scaled: for Logistic Regression, KNN, SVM (distance-based)
    - Unscaled: for Decision Trees, Random Forest (threshold-based, scaling has no effect)
@@ -336,7 +336,7 @@ Same 6 pollutants as regression, plus:
 
 ---
 
-### Step 5 — `vayu_step5_clustering.ipynb`
+### Step 5 - `vayu_step5_clustering.ipynb`
 
 **Purpose:** Build the dataset for K-Means clustering of Indian cities by pollution signature.
 
@@ -346,7 +346,7 @@ Same 6 pollutants as regression, plus:
 
 **Why bulletin files, not the primary dataset:**
 
-The primary dataset covers only 29 cities. K-Means clustering of 29 points would produce broad, hard-to-interpret clusters. The 277 bulletin files cover the full geographic spread of India — industrial cities in Maharashtra, coal belt cities in Jharkhand, hill stations in Himachal, coastal cities in Kerala. This geographic richness is what makes the clustering meaningful.
+The primary dataset covers only 29 cities. K-Means clustering of 29 points would produce broad, hard-to-interpret clusters. The 277 bulletin files cover the full geographic spread of India - industrial cities in Maharashtra, coal belt cities in Jharkhand, hill stations in Himachal, coastal cities in Kerala. This geographic richness is what makes the clustering meaningful.
 
 **City profile features built:**
 
@@ -354,10 +354,10 @@ The primary dataset covers only 29 cities. K-Means clustering of 29 points would
 |---|---|---|
 | `mean_aqi` | Mean of all daily AQI values | Overall chronic pollution level |
 | `median_aqi` | Median of all daily AQI values | Typical pollution level (robust to extreme events) |
-| `std_aqi` | Standard deviation of daily AQI | Volatility — does AQI swing wildly or stay flat? |
+| `std_aqi` | Standard deviation of daily AQI | Volatility - does AQI swing wildly or stay flat? |
 | `mean_aqi_winter` | Mean AQI in Nov/Dec/Jan/Feb | Winter-specific pollution (stubble burning, temperature inversion) |
 | `mean_aqi_summer` | Mean AQI in Mar/Apr/May | Summer-specific pollution (dust, heat-driven chemistry) |
-| `mean_aqi_monsoon` | Mean AQI in Jun–Sep | Monsoon suppression — cities that benefit most from rain |
+| `mean_aqi_monsoon` | Mean AQI in Jun–Sep | Monsoon suppression - cities that benefit most from rain |
 | `pct_poor_or_worse` | % of days with AQI > 200 | Chronic bad air quality frequency |
 | `pct_pm25_dominant` | % of days PM2.5 was prominent pollutant | Particulate-driven pollution signature (northern cities) |
 | `pct_pm10_dominant` | % of days PM10 was prominent | Dust-driven pollution signature (construction zones) |
@@ -365,15 +365,15 @@ The primary dataset covers only 29 cities. K-Means clustering of 29 points would
 
 **Operations performed:**
 
-1. **Stack all 277 files** — handle encoding, standardize column names, infer city from filename if column absent
-2. **Build city profiles** — one row per city using `.groupby().agg()` (avoids pandas 2.2 `KeyError` from `apply`)
-3. **Drop cities with incomplete profiles** — cities with NaN in any clustering feature are excluded
-4. **StandardScaler normalization** — mandatory for K-Means (distance-based algorithm)
-5. **Elbow method** — plot inertia vs K for K=2 to 12
-6. **Silhouette score** — computed for each K; the K with the highest score is recommended
+1. **Stack all 277 files** - handle encoding, standardize column names, infer city from filename if column absent
+2. **Build city profiles** - one row per city using `.groupby().agg()` (avoids pandas 2.2 `KeyError` from `apply`)
+3. **Drop cities with incomplete profiles** - cities with NaN in any clustering feature are excluded
+4. **StandardScaler normalization** - mandatory for K-Means (distance-based algorithm)
+5. **Elbow method** - plot inertia vs K for K=2 to 12
+6. **Silhouette score** - computed for each K; the K with the highest score is recommended
 7. **Final K-Means** run with chosen K using `n_init=20` for stability
 8. **PCA projection** to 2D for cluster visualization
-9. **Auto-labeling** — clusters ranked by mean AQI and assigned descriptive labels
+9. **Auto-labeling** - clusters ranked by mean AQI and assigned descriptive labels
 
 **Result:** 277 cities profiled, 229 with complete data, K=2 chosen (silhouette score 0.378). Two clusters found: relatively clean cities (mostly southern/hill) vs heavily polluted cities (mostly northern plains/industrial).
 
@@ -383,12 +383,12 @@ The primary dataset covers only 29 cities. K-Means clustering of 29 points would
 |---|---|
 | `03_clustering/city_profiles.csv` | 277 rows, one per city, all feature values |
 | `03_clustering/city_clusters.csv` | City profiles with cluster assignment and label |
-| `03_clustering/city_profiles_scaled.csv` | Scaled features + cluster labels — use directly with KMeans |
-| `03_clustering/bulletins_stacked.csv` | All 277 files stacked — use for time-series analysis |
+| `03_clustering/city_profiles_scaled.csv` | Scaled features + cluster labels - use directly with KMeans |
+| `03_clustering/bulletins_stacked.csv` | All 277 files stacked - use for time-series analysis |
 
 ---
 
-### Step 6 — `vayu_step6_dimensionality.ipynb`
+### Step 6 - `vayu_step6_dimensionality.ipynb`
 
 **Purpose:** Apply PCA, SVD, and t-SNE to the pollutant feature space.
 
@@ -400,7 +400,7 @@ The primary dataset covers only 29 cities. K-Means clustering of 29 points would
 
 **Why only the 6 pollutant columns:**
 
-PCA finds directions of maximum variance. If we include time features (month, hour), the principal components would reflect temporal patterns rather than pollutant co-occurrence. We want PC1 to mean "general pollution level" and PC2 to mean "PM-heavy vs ozone-heavy" — not "morning vs afternoon". Including non-pollutant features would muddy those interpretations.
+PCA finds directions of maximum variance. If we include time features (month, hour), the principal components would reflect temporal patterns rather than pollutant co-occurrence. We want PC1 to mean "general pollution level" and PC2 to mean "PM-heavy vs ozone-heavy" - not "morning vs afternoon". Including non-pollutant features would muddy those interpretations.
 
 **Operations performed:**
 
@@ -408,18 +408,18 @@ PCA finds directions of maximum variance. If we include time features (month, ho
 1. Fit StandardScaler on the full pollutant matrix
 2. Run full PCA (all N components where N = number of pollutants)
 3. Compute and plot explained variance per component (scree plot)
-4. Compute and plot cumulative variance — find how many components needed for 90% and 95%
-5. Plot component loadings heatmap — shows which pollutants define each PC
+4. Compute and plot cumulative variance - find how many components needed for 90% and 95%
+5. Plot component loadings heatmap - shows which pollutants define each PC
 6. Run 2D PCA projection, scatter plot colored by city and by AQI category
 
 **SVD:**
 1. Run TruncatedSVD on scaled matrix
 2. Plot singular value spectrum
-3. Compute effective rank — how many dimensions are needed to represent the data
-4. Compare explained variance to PCA output (should match — PCA is SVD of the covariance matrix)
+3. Compute effective rank - how many dimensions are needed to represent the data
+4. Compare explained variance to PCA output (should match - PCA is SVD of the covariance matrix)
 
 **t-SNE:**
-1. Sample 15,000 rows randomly (t-SNE is O(n²) — cannot run on full 842k)
+1. Sample 15,000 rows randomly (t-SNE is O(n²) - cannot run on full 842k)
 2. Pre-reduce to 10 PCA components for speed (standard practice before t-SNE)
 3. Run t-SNE with perplexity=50
 4. Plot scatter colored by AQI category and by PM2.5 value
@@ -431,7 +431,7 @@ PCA finds directions of maximum variance. If we include time features (month, ho
 |---|---|
 | `04_dimensionality/pollutant_matrix_scaled.csv` | StandardScaler-normalized pollutant matrix with city/category metadata |
 | `04_dimensionality/pca_components.csv` | All PC coordinates for every row |
-| `04_dimensionality/pca_loadings.csv` | Component loadings + explained variance — use for interpretation |
+| `04_dimensionality/pca_loadings.csv` | Component loadings + explained variance - use for interpretation |
 | `04_dimensionality/tsne_sample.csv` | t-SNE 2D coordinates for the 15k sample with original pollutant values |
 
 ---
@@ -444,11 +444,11 @@ PCA finds directions of maximum variance. If we include time features (month, ho
 
 | Requirement | Detail |
 |---|---|
-| Target type | Numeric continuous (float) — AQI 0–500 |
+| Target type | Numeric continuous (float) - AQI 0–500 |
 | Features | 6 pollutants + month, hour, day_of_week |
 | Missing values | None allowed in any feature or target row |
 | Scaling | Not required for the algorithm itself, but log-transforming skewed features improves fit |
-| Outliers | Cap at 99th percentile (Winsorization) — a single extreme point can drag the regression line |
+| Outliers | Cap at 99th percentile (Winsorization) - a single extreme point can drag the regression line |
 | Multicollinearity | Check `|r| > 0.85` between feature pairs. High VIF (>10) = feature should be dropped or merged |
 | Split strategy | 80/20 stratified by city |
 | Class balance | Not applicable |
@@ -465,7 +465,7 @@ PCA finds directions of maximum variance. If we include time features (month, ho
 | Target type | Integer label 0–5 (AQI_category encoded) |
 | Features | 6 pollutants + city_enc + month, hour, day_of_week, season_enc |
 | Missing values | None allowed |
-| Scaling | **Required** — gradient descent for logistic regression converges much faster with scaled features |
+| Scaling | **Required** - gradient descent for logistic regression converges much faster with scaled features |
 | Class balance | Use `class_weight='balanced'` or SMOTE if imbalance ratio > 3x |
 | Split strategy | 80/20 stratified by AQI_label |
 | File to use | `02_classification/clf_train_scaled.csv` |
@@ -479,7 +479,7 @@ PCA finds directions of maximum variance. If we include time features (month, ho
 | Target type | Integer label 0–5 |
 | Features | Same as logistic regression |
 | Missing values | None allowed |
-| Scaling | **Critical** — KNN computes Euclidean distance. PM2.5 (0–1000) would completely dominate hour (0–23) without scaling |
+| Scaling | **Critical** - KNN computes Euclidean distance. PM2.5 (0–1000) would completely dominate hour (0–23) without scaling |
 | Class balance | SMOTE recommended if severe imbalance (> 5x) |
 | Split strategy | 80/20 stratified by AQI_label |
 | File to use | `02_classification/clf_train_scaled.csv` |
@@ -495,7 +495,7 @@ PCA finds directions of maximum variance. If we include time features (month, ho
 | Target type | Integer label 0–5 |
 | Features | Same as logistic regression |
 | Missing values | None allowed |
-| Scaling | **Critical** — SVM kernel functions are distance-based. Unscaled features produce incorrect support vectors |
+| Scaling | **Critical** - SVM kernel functions are distance-based. Unscaled features produce incorrect support vectors |
 | Class balance | Use `class_weight='balanced'` in SVC |
 | Split strategy | 80/20 stratified by AQI_label |
 | File to use | `02_classification/clf_train_scaled.csv` |
@@ -511,7 +511,7 @@ PCA finds directions of maximum variance. If we include time features (month, ho
 | Target type | Integer label 0–5 |
 | Features | Same as logistic regression |
 | Missing values | None allowed in sklearn implementation |
-| Scaling | **Not required** — decision trees use thresholds, not distances. Scaling has zero effect on split quality |
+| Scaling | **Not required** - decision trees use thresholds, not distances. Scaling has zero effect on split quality |
 | Class balance | Use `class_weight='balanced'` |
 | Split strategy | 80/20 stratified by AQI_label |
 | File to use | `02_classification/clf_train_unscaled.csv` |
@@ -525,7 +525,7 @@ PCA finds directions of maximum variance. If we include time features (month, ho
 | Target type | Integer label 0–5 |
 | Features | Same as logistic regression |
 | Missing values | None allowed |
-| Scaling | **Not required** — ensemble of decision trees |
+| Scaling | **Not required** - ensemble of decision trees |
 | Class balance | Use `class_weight='balanced'` |
 | Split strategy | 80/20 stratified by AQI_label |
 | File to use | `02_classification/clf_train_unscaled.csv` |
@@ -536,11 +536,11 @@ PCA finds directions of maximum variance. If we include time features (month, ho
 
 | Requirement | Detail |
 |---|---|
-| Target variable | None — unsupervised |
+| Target variable | None - unsupervised |
 | Input | One row per city (city-level aggregated profile) |
 | Features | mean_aqi, std_aqi, seasonal means, pct_poor_or_worse, pollutant dominance percentages |
-| Missing values | None allowed — drop cities with incomplete profiles |
-| Scaling | **Critical** — K-Means uses Euclidean distance. StandardScaler mandatory |
+| Missing values | None allowed - drop cities with incomplete profiles |
+| Scaling | **Critical** - K-Means uses Euclidean distance. StandardScaler mandatory |
 | K selection | Elbow method + silhouette score |
 | File to use | `03_clustering/city_profiles_scaled.csv` |
 
@@ -552,11 +552,11 @@ PCA finds directions of maximum variance. If we include time features (month, ho
 
 | Requirement | Detail |
 |---|---|
-| Target variable | None — unsupervised |
-| Input | Pure pollutant concentration matrix — no text, no time features |
-| Missing values | None allowed — drop rows with any NaN pollutant |
-| Scaling | **Critical for PCA and t-SNE** — variance-based and distance-based respectively |
-| t-SNE sample size | Maximum ~15,000 rows — memory complexity is O(n²) |
+| Target variable | None - unsupervised |
+| Input | Pure pollutant concentration matrix - no text, no time features |
+| Missing values | None allowed - drop rows with any NaN pollutant |
+| Scaling | **Critical for PCA and t-SNE** - variance-based and distance-based respectively |
+| t-SNE sample size | Maximum ~15,000 rows - memory complexity is O(n²) |
 | File to use | `04_dimensionality/pollutant_matrix_scaled.csv` |
 
 ---
@@ -565,15 +565,15 @@ PCA finds directions of maximum variance. If we include time features (month, ho
 
 | Operation | What It Fixes | Applied To | Rows Dropped? |
 |---|---|---|---|
-| Replace 999 → NaN | Sentinel values (CPCB sensor error code) | All numeric columns | No — values replaced in place |
-| Range validation (unit-aware) | Physically impossible readings | All pollutant columns | No — values nulled in place |
-| Forward fill (limit=3) | Short sensor dropout gaps ≤ 3 hours | Pollutant columns within each city | No — NaN values filled |
-| Drop all-null pollutant rows | Extended outages — all 6 pollutants missing | All rows | Yes — if all pollutants are NaN |
-| Deduplication | Duplicate city + datetime rows | All rows | Yes — if exact duplicate |
+| Replace 999 → NaN | Sentinel values (CPCB sensor error code) | All numeric columns | No - values replaced in place |
+| Range validation (unit-aware) | Physically impossible readings | All pollutant columns | No - values nulled in place |
+| Forward fill (limit=3) | Short sensor dropout gaps ≤ 3 hours | Pollutant columns within each city | No - NaN values filled |
+| Drop all-null pollutant rows | Extended outages - all 6 pollutants missing | All rows | Yes - if all pollutants are NaN |
+| Deduplication | Duplicate city + datetime rows | All rows | Yes - if exact duplicate |
 | Datetime parsing | Inconsistent date string formats | datetime column | No |
 | Time feature extraction | Create year/month/day/hour/season | New columns added | No |
 | AQI_category derivation | Add category label if not present | New column added | No |
-| Season NaN removal | season_enc column all-NaN when source column absent | Feature list updated | No — feature removed, not rows |
+| Season NaN removal | season_enc column all-NaN when source column absent | Feature list updated | No - feature removed, not rows |
 | Category standardization | Inconsistent casing/spacing in category strings | AQI_category column | No |
 
 ---
@@ -596,8 +596,8 @@ data/cleaned/
 ├── 02_classification/
 │   ├── clf_train_scaled.csv        ← Scaled. Use for Logistic Regression, KNN, SVM.
 │   ├── clf_train_unscaled.csv      ← Unscaled. Use for Decision Trees, Random Forest.
-│   ├── clf_test_scaled.csv         ← Test set — scaled version.
-│   ├── clf_test_unscaled.csv       ← Test set — unscaled version.
+│   ├── clf_test_scaled.csv         ← Test set - scaled version.
+│   ├── clf_test_unscaled.csv       ← Test set - unscaled version.
 │   ├── label_map.json              ← {0: "Good", 1: "Satisfactory", ...}
 │   └── feature_list.txt            ← Feature list + usage guide.
 │
@@ -618,7 +618,7 @@ data/cleaned/
 
 ## 8. Known Issues and Fixes Applied
 
-### Issue 1 — `cloud_cover_percent` detected as pollutant column
+### Issue 1 - `cloud_cover_percent` detected as pollutant column
 
 **Cause:** The keyword `co` is a substring of `cloud_cover`. Using `'co'` as a keyword matched unintended columns.
 
@@ -626,15 +626,15 @@ data/cleaned/
 
 ---
 
-### Issue 2 — CO range validation nulled 842,000 valid readings
+### Issue 2 - CO range validation nulled 842,000 valid readings
 
-**Cause:** CO valid range was set to `(0, 50)` — correct for mg/m³. But the file stores CO as `co_ugm3` (micrograms per cubic metre). 50 µg/m³ is an absurdly small value that every real CO reading exceeds.
+**Cause:** CO valid range was set to `(0, 50)` - correct for mg/m³. But the file stores CO as `co_ugm3` (micrograms per cubic metre). 50 µg/m³ is an absurdly small value that every real CO reading exceeds.
 
 **Fix:** Created two range tables: `VALID_RANGES_UGM3` and `VALID_RANGES_MGM3`. The code detects `ugm3` in the column name and selects the correct table. CO limit in µg/m³ is `50,000` (= 50 mg/m³ × 1000).
 
 ---
 
-### Issue 3 — `fillna(method='ffill')` TypeError in pandas ≥ 2.1
+### Issue 3 - `fillna(method='ffill')` TypeError in pandas ≥ 2.1
 
 **Cause:** The `method` parameter was deprecated in pandas 2.1 and raises `TypeError` in 2.2+.
 
@@ -642,15 +642,15 @@ data/cleaned/
 
 ---
 
-### Issue 4 — `groupby().apply()` KeyError on `city` column in pandas ≥ 2.2
+### Issue 4 - `groupby().apply()` KeyError on `city` column in pandas ≥ 2.2
 
-**Cause:** pandas 2.2 changed `groupby().apply()` behavior — the grouped key column is no longer included in the group DataFrame passed to the function. Accessing `grp['city']` inside `city_profile()` raised `KeyError`.
+**Cause:** pandas 2.2 changed `groupby().apply()` behavior - the grouped key column is no longer included in the group DataFrame passed to the function. Accessing `grp['city']` inside `city_profile()` raised `KeyError`.
 
-**Fix:** Rewrote city profile computation using explicit `groupby().agg()` calls — one per metric group — and merged results on `city` at the end. Completely avoids the `apply()` pattern.
+**Fix:** Rewrote city profile computation using explicit `groupby().agg()` calls - one per metric group - and merged results on `city` at the end. Completely avoids the `apply()` pattern.
 
 ---
 
-### Issue 5 — `season_enc` all-NaN wipes all rows in `dropna()`
+### Issue 5 - `season_enc` all-NaN wipes all rows in `dropna()`
 
 **Cause:** The `season_enc` column is built from the `season` column. If `season` does not exist in the master cleaned file, `season_enc` is created as all-NaN. Running `dropna(subset=ALL_FEATURES)` then drops every row.
 
@@ -658,7 +658,7 @@ data/cleaned/
 
 ---
 
-### Issue 6 — Waterfall chart showing only "Raw" bar
+### Issue 6 - Waterfall chart showing only "Raw" bar
 
 **Cause:** The chart filtered to only steps where `rows_removed > 0`. Since this dataset had 0 rows dropped (KNN-imputed, no duplicates), only the Raw bar appeared.
 
@@ -666,7 +666,7 @@ data/cleaned/
 
 ---
 
-### Issue 7 — `to_parquet()` ImportError
+### Issue 7 - `to_parquet()` ImportError
 
 **Cause:** `pyarrow` not installed in the project venv.
 
