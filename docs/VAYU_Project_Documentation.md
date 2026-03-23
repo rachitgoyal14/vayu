@@ -88,7 +88,7 @@ vayu_step2_cleaning.ipynb
   ─ Drop all-null rows, deduplicate
   ─ Parse datetime, add time features
   ─ Derive AQI_category
-  ─ Output: data/cleaned/05_shared/master_cleaned.parquet + .csv
+  ─ Output: data/cleaned/04_shared/master_cleaned.parquet + .csv
         │
    ┌────┴─────────────────────────────────────┐
    │                                          │
@@ -133,7 +133,7 @@ vayu_step6_dimensionality.ipynb
 
 **What it does:**
 
-- Creates the 5 output folders (`01_regression` through `05_shared`) with README files explaining what each folder is for, which source files feed it, and which files were rejected
+- Creates the 5 output folders (`01_regression` through `04_shared`) with README files explaining what each folder is for, which source files feed it, and which files were rejected
 - Loads the primary dataset and prints every column with dtype and null count
 - Tags each column as POLLUTANT / TARGET / IDENTITY / DATETIME / OTHER using keyword matching
 - Detects and counts sentinel value 999 per column — this is the key diagnostic
@@ -213,9 +213,9 @@ If a numeric AQI column exists, we derive the 6-class category using CPCB breakp
 
 | File | Size | Description |
 |---|---|---|
-| `05_shared/master_cleaned.parquet` | ~30 MB | Binary compressed — use this in Steps 3–6 |
-| `05_shared/master_cleaned.csv` | ~150 MB | Human readable backup |
-| `05_shared/cleaning_log.csv` | <1 MB | Every operation logged with before/after row counts |
+| `04_shared/master_cleaned.parquet` | ~30 MB | Binary compressed — use this in Steps 3–6 |
+| `04_shared/master_cleaned.csv` | ~150 MB | Human readable backup |
+| `04_shared/cleaning_log.csv` | <1 MB | Every operation logged with before/after row counts |
 
 ---
 
@@ -394,7 +394,7 @@ The primary dataset covers only 29 cities. K-Means clustering of 29 points would
 
 **Techniques:** PCA, t-SNE, SVD *(Lectures 46–54)*
 
-**Source data:** `05_shared/master_cleaned.parquet`
+**Source data:** `04_shared/master_cleaned.parquet`
 
 **Features used:** Pollutant columns only (PM2.5, PM10, NO2, SO2, CO, O3). No time features, no categorical features.
 
@@ -583,7 +583,7 @@ PCA finds directions of maximum variance. If we include time features (month, ho
 ```
 data/cleaned/
 │
-├── 05_shared/
+├── 04_shared/
 │   ├── master_cleaned.parquet      ← Primary output of Step 2. Use this in Steps 3, 4, 6.
 │   ├── master_cleaned.csv          ← Same data, human-readable backup.
 │   └── cleaning_log.csv            ← Every cleaning operation logged with row counts.

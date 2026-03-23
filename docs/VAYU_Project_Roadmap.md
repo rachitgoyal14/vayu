@@ -12,7 +12,7 @@ Your 299 raw files get cleaned and split into task-specific datasets across 5 fo
 data/
   raw/                        ← your original 299 files, untouched
   cleaned/
-    05_shared/                ← master cleaned file (all steps read from here)
+    04_shared/                ← master cleaned file (all steps read from here)
     01_regression/            ← Linear + Multiple Regression
     02_classification/        ← Logistic Regression, KNN, SVM, Trees, Random Forest
     03_clustering/            ← K-Means
@@ -79,7 +79,7 @@ data/
 - Computes AQI_category if not already present using CPCB breakpoints
 - Shows before/after comparison plots for every pollutant
 - Shows before/after correlation heatmap
-- Saves: `data/cleaned/05_shared/master_cleaned.parquet` and `.csv`
+- Saves: `data/cleaned/04_shared/master_cleaned.parquet` and `.csv`
 
 **Output:** `master_cleaned.parquet`, `master_cleaned.csv`, `cleaning_report.png`
 
@@ -282,11 +282,11 @@ This section explains what each model needs from the data and why, mapped to you
 
 | Output Folder | Primary Source | Why This Source | Files Rejected |
 |---|---|---|---|
-| `05_shared` | `aqi_india_38cols_knn_final.csv` | 842k rows, all 6 pollutants, 29 cities, already imputed | All other files |
-| `01_regression` | `05_shared/master_cleaned.parquet` | Needs numeric AQI + pollutant features | Bulletin files (no raw pollutants) |
-| `02_classification` | `05_shared/master_cleaned.parquet` | Needs AQI_category + pollutant features | Bulletin files (no raw pollutants) |
+| `04_shared` | `aqi_india_38cols_knn_final.csv` | 842k rows, all 6 pollutants, 29 cities, already imputed | All other files |
+| `01_regression` | `04_shared/master_cleaned.parquet` | Needs numeric AQI + pollutant features | Bulletin files (no raw pollutants) |
+| `02_classification` | `04_shared/master_cleaned.parquet` | Needs AQI_category + pollutant features | Bulletin files (no raw pollutants) |
 | `03_clustering` | All 277 `*_AQIBulletins.csv` files | Needs 277+ cities for meaningful clustering | Primary file (only 29 cities) |
-| `04_dimensionality` | `05_shared/master_cleaned.parquet` | Needs raw pollutant concentrations | Bulletin files (no raw pollutants) |
+| `04_dimensionality` | `04_shared/master_cleaned.parquet` | Needs raw pollutant concentrations | Bulletin files (no raw pollutants) |
 
 ---
 
