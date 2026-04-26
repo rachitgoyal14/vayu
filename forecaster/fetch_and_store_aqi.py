@@ -11,13 +11,38 @@ load_dotenv()
 API_KEY = os.getenv("OPENWEATHER_API_KEY")
 
 # -----------------------
-# City coordinates
+# City coordinates (ALL 29)
 # -----------------------
 CITIES = {
+    "agartala": (23.8315, 91.2868),
+    "ahmedabad": (23.0225, 72.5714),
+    "aizawl": (23.7271, 92.7176),
+    "bengaluru": (12.9716, 77.5946),
+    "bhopal": (23.2599, 77.4126),
+    "bhubaneswar": (20.2961, 85.8245),
+    "chandigarh": (30.7333, 76.7794),
+    "chennai": (13.0827, 80.2707),
+    "dehradun": (30.3165, 78.0322),
     "delhi": (28.6139, 77.2090),
+    "gangtok": (27.3389, 88.6065),
+    "gurugram": (28.4595, 77.0266),
+    "guwahati": (26.1445, 91.7362),
+    "hyderabad": (17.3850, 78.4867),
+    "imphal": (24.8170, 93.9368),
+    "itanagar": (27.0844, 93.6053),
+    "jaipur": (26.9124, 75.7873),
+    "kohima": (25.6751, 94.1086),
+    "kolkata": (22.5726, 88.3639),
+    "lucknow": (26.8467, 80.9462),
     "mumbai": (19.0760, 72.8777),
-    "bangalore": (12.9716, 77.5946),
-    "kolkata": (22.5726, 88.3639)
+    "panaji": (15.4909, 73.8278),
+    "patna": (25.5941, 85.1376),
+    "raipur": (21.2514, 81.6296),
+    "ranchi": (23.3441, 85.3096),
+    "shillong": (25.5788, 91.8933),
+    "shimla": (31.1048, 77.1734),
+    "thiruvananthapuram": (8.5241, 76.9366),
+    "visakhapatnam": (17.6868, 83.2185),
 }
 
 # -----------------------
@@ -38,11 +63,11 @@ BREAKPOINTS = {
 def calculate_sub_index(value, pollutant):
     if value is None:
         return None
-    
+
     for Clow, Chigh, Ilow, Ihigh in BREAKPOINTS[pollutant]:
         if Clow <= value <= Chigh:
             return ((Ihigh - Ilow)/(Chigh - Clow)) * (value - Clow) + Ilow
-    
+
     return None
 
 # -----------------------
@@ -51,7 +76,7 @@ def calculate_sub_index(value, pollutant):
 def calculate_aqi(components):
     sub_indices = []
 
-    # IMPORTANT: convert CO to mg/m³
+    # Convert CO µg/m³ → mg/m³
     components["co"] = components.get("co", 0) / 1000
 
     for pollutant in ["pm2_5", "pm10", "no2", "so2", "o3", "co"]:
@@ -63,19 +88,19 @@ def calculate_aqi(components):
     return round(max(sub_indices)) if sub_indices else None
 
 # -----------------------
-# Fetch data from API
+# Fetch data
 # -----------------------
 def fetch_city_data(city, lat, lon):
     url = f"http://api.openweathermap.org/data/2.5/air_pollution?lat={lat}&lon={lon}&appid={API_KEY}"
-    
-    response = requests.get(url)
 
+    response = requests.get(url)
     if response.status_code != 200:
-        raise Exception(f"API error: {response.text}")
+        raise Exception(response.text)
 
     data = response.json()["list"][0]["components"]
 
-    now = datetime.now()
+    # 🔥 CRITICAL: round to exact hour
+    now = datetime.now().replace(minute=0, second=0, microsecond=0)
 
     aqi = calculate_aqi(data.copy())
 
@@ -83,7 +108,6 @@ def fetch_city_data(city, lat, lon):
         "city": city,
         "datetime": now.strftime("%Y-%m-%d %H:%M:%S"),
 
-        # MATCH TRAINING COLUMN NAMES
         "pm2_5_ugm3": data.get("pm2_5"),
         "pm10_ugm3": data.get("pm10"),
         "co_ugm3": data.get("co"),
@@ -93,7 +117,6 @@ def fetch_city_data(city, lat, lon):
 
         "AQI": aqi,
 
-        # TIME FEATURES (VERY IMPORTANT)
         "hour": now.hour,
         "day_of_week": now.weekday(),
         "month": now.month,
@@ -101,7 +124,7 @@ def fetch_city_data(city, lat, lon):
     }
 
 # -----------------------
-# Main execution
+# Main
 # -----------------------
 def main():
     rows = []
@@ -122,18 +145,24 @@ def main():
         "no2_ugm3", "so2_ugm3", "o3_ugm3",
         "AQI", "hour", "day_of_week", "month",
         "is_weekend"
-        ]
+    ]
 
     df = df[EXPECTED_COLUMNS]
 
-    
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
     file_path = os.path.join(BASE_DIR, "hourlyData.csv")
 
-    if not os.path.exists(file_path):
-        df.to_csv(file_path, index=False)
-    else:
-        df.to_csv(file_path, mode='a', header=False, index=False)
+    # -----------------------
+    # Append + Deduplicate
+    # -----------------------
+    if os.path.exists(file_path):
+        old_df = pd.read_csv(file_path)
+        df = pd.concat([old_df, df])
+
+        # 🔥 remove duplicates (important for cron/GH actions)
+        df = df.drop_duplicates(subset=["city", "datetime"])
+
+    df.to_csv(file_path, index=False)
 
     print("Data saved successfully")
 

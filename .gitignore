@@ -5,3 +5,5 @@ venv/
 rf_24h.pkl
 
 .env
+
+__pycache__
