@@ -1,0 +1,52 @@
+name: Hourly AQI Data Fetch v2
+
+on:
+  schedule:
+    - cron: '0 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aqi-fetch
+  cancel-in-progress: true
+
+jobs:
+  fetch-data:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install pandas requests python-dotenv
+
+      - name: Fetch AQI Data
+        env:
+          OPENWEATHER_API_KEY: ${{ secrets.OPENWEATHER_API_KEY }}
+        run: python -m forecaster.fetch_and_store_aqi
+
+      - name: Commit and push CSV
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "actions@github.com"
+
+          git checkout data 2>/dev/null || git checkout --orphan data
+
+          git checkout main -- forecaster/hourlyData.csv
+
+          git add forecaster/hourlyData.csv
+          git diff --cached --quiet && echo "No changes" && exit 0
+
+          git commit -m "Update AQI data [auto] $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          git push origin data --force

@@ -1,0 +1,9 @@
+data/
+venv/
+.ipynb_checkpoints/
+
+rf_24h.pkl
+
+.env
+
+__pycache__
