@@ -1,24 +1,29 @@
-import pandas as pd
 import os
+import pandas as pd
+from dotenv import load_dotenv
+from supabase import create_client
 
 # -----------------------
-# Load CSV from GitHub data branch
+# Load Supabase client
 # -----------------------
-CSV_URL = "https://raw.githubusercontent.com/rachitgoyal14/vayu/data/forecaster/hourlyData.csv"
+load_dotenv()
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
-def load_data():
-    df = pd.read_csv(CSV_URL)
+supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+
+# -----------------------
+# Load data from Supabase
+# -----------------------
+def load_data(city):
+    response = supabase.table("aqi_data") \
+        .select("*") \
+        .eq("city", city) \
+        .order("datetime") \
+        .execute()
+    df = pd.DataFrame(response.data)
     df["datetime"] = pd.to_datetime(df["datetime"])
     return df
-
-# -----------------------
-# Filter by city
-# -----------------------
-def get_city_data(df, city):
-    city_df = df[df["city"] == city].copy()
-    city_df = city_df.sort_values("datetime")
-    return city_df
-
 
 # -----------------------
 # Create lag features
@@ -29,17 +34,14 @@ def add_lag_features(city_df):
     city_df["AQI_lag_24"] = city_df["AQI"].shift(24)
     return city_df
 
-
 # -----------------------
 # Get latest usable row
 # -----------------------
 def get_latest_features(city_df):
-
     if len(city_df) == 0:
         raise ValueError("No data available for this city.")
 
     city_df = city_df.ffill()
-
     latest_row = city_df.iloc[-1]
 
     def safe(val, fallback):
@@ -56,13 +58,10 @@ def get_latest_features(city_df):
         "no2_ugm3": latest_row["no2_ugm3"],
         "so2_ugm3": latest_row["so2_ugm3"],
         "o3_ugm3": latest_row["o3_ugm3"],
-
         "hour": latest_row["hour"],
         "day_of_week": latest_row["day_of_week"],
         "month": latest_row["month"],
-
         "is_weekend": latest_row["is_weekend"],
-
         "AQI_lag_1": lag_1,
         "AQI_lag_6": lag_6,
         "AQI_lag_24": lag_24,
@@ -70,24 +69,20 @@ def get_latest_features(city_df):
 
     return features
 
-
 # -----------------------
 # MAIN FUNCTION
 # -----------------------
 def generate_features(city):
-    df = load_data()
-    city_df = get_city_data(df, city)
-    city_df = add_lag_features(city_df)
-    features = get_latest_features(city_df)
+    df = load_data(city)
+    df = add_lag_features(df)
+    features = get_latest_features(df)
     return features
-
 
 # -----------------------
 # TEST
 # -----------------------
 if __name__ == "__main__":
     city = "delhi"
-    
     try:
         features = generate_features(city)
         print("\nGenerated Features:\n")

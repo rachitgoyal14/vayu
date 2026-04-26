@@ -3,12 +3,17 @@ import requests
 import pandas as pd
 from datetime import datetime
 from dotenv import load_dotenv
+from supabase import create_client
 
 # -----------------------
-# Load API key
+# Load API keys
 # -----------------------
 load_dotenv()
 API_KEY = os.getenv("OPENWEATHER_API_KEY")
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+
+supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # -----------------------
 # City coordinates (ALL 29)
@@ -63,11 +68,9 @@ BREAKPOINTS = {
 def calculate_sub_index(value, pollutant):
     if value is None:
         return None
-
     for Clow, Chigh, Ilow, Ihigh in BREAKPOINTS[pollutant]:
         if Clow <= value <= Chigh:
             return ((Ihigh - Ilow)/(Chigh - Clow)) * (value - Clow) + Ilow
-
     return None
 
 # -----------------------
@@ -75,16 +78,12 @@ def calculate_sub_index(value, pollutant):
 # -----------------------
 def calculate_aqi(components):
     sub_indices = []
-
-    # Convert CO µg/m³ → mg/m³
     components["co"] = components.get("co", 0) / 1000
-
     for pollutant in ["pm2_5", "pm10", "no2", "so2", "o3", "co"]:
         val = components.get(pollutant)
         sub = calculate_sub_index(val, pollutant)
         if sub is not None:
             sub_indices.append(sub)
-
     return round(max(sub_indices)) if sub_indices else None
 
 # -----------------------
@@ -92,31 +91,22 @@ def calculate_aqi(components):
 # -----------------------
 def fetch_city_data(city, lat, lon):
     url = f"http://api.openweathermap.org/data/2.5/air_pollution?lat={lat}&lon={lon}&appid={API_KEY}"
-
     response = requests.get(url)
     if response.status_code != 200:
         raise Exception(response.text)
-
     data = response.json()["list"][0]["components"]
-
-    # 🔥 CRITICAL: round to exact hour
     now = datetime.now().replace(minute=0, second=0, microsecond=0)
-
     aqi = calculate_aqi(data.copy())
-
     return {
         "city": city,
         "datetime": now.strftime("%Y-%m-%d %H:%M:%S"),
-
         "pm2_5_ugm3": data.get("pm2_5"),
         "pm10_ugm3": data.get("pm10"),
         "co_ugm3": data.get("co"),
         "no2_ugm3": data.get("no2"),
         "so2_ugm3": data.get("so2"),
         "o3_ugm3": data.get("o3"),
-
         "AQI": aqi,
-
         "hour": now.hour,
         "day_of_week": now.weekday(),
         "month": now.month,
@@ -128,7 +118,6 @@ def fetch_city_data(city, lat, lon):
 # -----------------------
 def main():
     rows = []
-
     for city, (lat, lon) in CITIES.items():
         try:
             row = fetch_city_data(city, lat, lon)
@@ -137,25 +126,14 @@ def main():
         except Exception as e:
             print(f"Error fetching {city}: {e}")
 
-    new_df = pd.DataFrame(rows)
-
-    EXPECTED_COLUMNS = [
-        "city", "datetime",
-        "pm2_5_ugm3", "pm10_ugm3", "co_ugm3",
-        "no2_ugm3", "so2_ugm3", "o3_ugm3",
-        "AQI", "hour", "day_of_week", "month",
-        "is_weekend"
-    ]
-
-    new_df = new_df[EXPECTED_COLUMNS]
-
-    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-    file_path = os.path.join(BASE_DIR, "hourlyData.csv")
-
-    # Save only the freshly fetched 29 rows
-    # Merging with old data is handled by the GitHub Actions workflow
-    new_df.to_csv(file_path, index=False)
-    print(f"Fetched {len(new_df)} new rows")
+    if rows:
+        response = supabase.table("aqi_data").upsert(
+            rows,
+            on_conflict="city,datetime"
+        ).execute()
+        print(f"Upserted {len(rows)} rows to Supabase")
+    else:
+        print("No rows to insert")
 
 if __name__ == "__main__":
     main()
