@@ -1,0 +1,41 @@
+{
+  "best_model": "RandomForest",
+  "best_accuracy": 0.7932,
+  "best_f1_weighted": 0.7934,
+  "rf_accuracy": 0.7932,
+  "rf_f1_weighted": 0.7934,
+  "xgb_accuracy": 0.7454,
+  "xgb_f1_weighted": 0.7483,
+  "features": [
+    "pm2_5_ugm3",
+    "pm10_ugm3",
+    "co_ugm3",
+    "o3_ugm3",
+    "no2_ugm3",
+    "city_enc"
+  ],
+  "target_int": "aqi_category_enc",
+  "target_str": "aqi_category",
+  "categories": [
+    "Good",
+    "Satisfactory",
+    "Moderate",
+    "Poor",
+    "Very Poor",
+    "Severe"
+  ],
+  "int_to_category": {
+    "0": "Good",
+    "1": "Satisfactory",
+    "2": "Moderate",
+    "3": "Poor",
+    "4": "Very Poor",
+    "5": "Severe"
+  },
+  "classes_present": [
+    0,
+    2,
+    3,
+    4
+  ]
+}

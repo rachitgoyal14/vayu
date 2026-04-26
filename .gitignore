@@ -7,3 +7,7 @@ rf_24h.pkl
 .env
 
 __pycache__
+
+rf_classifier.pkl
+
+best_classifier.pkl
