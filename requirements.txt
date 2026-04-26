@@ -10,3 +10,6 @@ statsmodels
 xgboost
 python-dotenv
 requests
+
+fastapi
+uvicorn

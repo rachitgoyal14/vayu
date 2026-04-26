@@ -41,9 +41,13 @@ jobs:
           git config --global user.name "github-actions"
           git config --global user.email "actions@github.com"
 
-          git checkout data 2>/dev/null || git checkout --orphan data
+          # Save the freshly updated CSV before switching branches
+          cp forecaster/hourlyData.csv /tmp/hourlyData.csv
 
-          git checkout main -- forecaster/hourlyData.csv
+          git checkout data
+
+          # Paste the new CSV in
+          cp /tmp/hourlyData.csv forecaster/hourlyData.csv
 
           git add forecaster/hourlyData.csv
           git diff --cached --quiet && echo "No changes" && exit 0
