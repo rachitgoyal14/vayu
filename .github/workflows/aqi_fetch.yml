@@ -41,30 +41,12 @@ jobs:
           git config --global user.name "github-actions"
           git config --global user.email "actions@github.com"
 
-          # Save freshly fetched 29 rows
           cp forecaster/hourlyData.csv /tmp/hourlyData_new.csv
 
-          # Switch to data branch and grab existing CSV
           git checkout data
           cp forecaster/hourlyData.csv /tmp/hourlyData_old.csv 2>/dev/null || touch /tmp/hourlyData_old.csv
 
-          # Merge old + new using Python
-          python3 - <<'EOF'
-import pandas as pd
-
-try:
-    old = pd.read_csv("/tmp/hourlyData_old.csv")
-    print(f"Loaded {len(old)} existing rows")
-except Exception:
-    old = pd.DataFrame()
-    print("No existing rows found")
-
-new = pd.read_csv("/tmp/hourlyData_new.csv")
-df = pd.concat([old, new]).drop_duplicates(subset=["city", "datetime"])
-df = df.sort_values(["city", "datetime"]).reset_index(drop=True)
-df.to_csv("forecaster/hourlyData.csv", index=False)
-print(f"Total rows after merge: {len(df)}")
-EOF
+          python3 forecaster/merge_csv.py
 
           git add forecaster/hourlyData.csv
           git diff --cached --quiet && echo "No changes" && exit 0
