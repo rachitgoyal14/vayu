@@ -1,23 +1,25 @@
-import json
+import os
 import joblib
 import numpy as np
 import pandas as pd
 import requests
-import os
 
 from fastapi import FastAPI, HTTPException
 from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
 
 # =========================
-# CONSTANTS
+# PATH SETUP
 # =========================
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MODELS_DIR = os.path.abspath(os.path.join(BASE_DIR, "../models"))
 
 CSV_URL = "https://raw.githubusercontent.com/rachitgoyal14/vayu/data/forecaster/hourlyData.csv"
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-
-MODELS_DIR = os.path.abspath(os.path.join(BASE_DIR, "../models"))
+# =========================
+# FEATURES
+# =========================
 
 FORECAST_FEATURES = [
     'pm2_5_ugm3',
@@ -62,29 +64,32 @@ CAT_COLORS = {
 
 label_map_from_xgb = {0: 0, 1: 2, 2: 3, 3: 4}
 
-# =========================
-# GLOBAL MODELS STORE
-# =========================
-
 models = {}
 
 # =========================
-# LIFESPAN (LOAD MODELS ONCE)
+# LOAD MODELS (STARTUP)
 # =========================
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+
+    # Forecasters
     models['xgb_6h'] = joblib.load(os.path.join(MODELS_DIR, 'xgb_6h.pkl'))
     models['xgb_12h'] = joblib.load(os.path.join(MODELS_DIR, 'xgb_12h.pkl'))
     models['xgb_24h'] = joblib.load(os.path.join(MODELS_DIR, 'xgb_24h.pkl'))
 
+    # Classifier
     models['classifier'] = joblib.load(os.path.join(MODELS_DIR, 'best_classifier.pkl'))
+
+    # SHAP explainers (per horizon)
     models['explainer_6h'] = joblib.load(os.path.join(MODELS_DIR, 'shap_explainer_6h.pkl'))
     models['explainer_12h'] = joblib.load(os.path.join(MODELS_DIR, 'shap_explainer_12h.pkl'))
     models['explainer_24h'] = joblib.load(os.path.join(MODELS_DIR, 'shap_explainer_24h.pkl'))
+
+    # Encoder
     models['city_encoder'] = joblib.load(os.path.join(MODELS_DIR, 'city_encoder.pkl'))
 
-    print("✅ Models loaded")
+    print("✅ All models loaded")
 
     yield
 
@@ -102,19 +107,7 @@ app.add_middleware(
 )
 
 # =========================
-# UTIL: AQI CATEGORY
-# =========================
-
-def aqi_to_category(aqi: float):
-    if aqi <= 50: return 'Good', '#00E400'
-    if aqi <= 100: return 'Satisfactory', '#92D050'
-    if aqi <= 200: return 'Moderate', '#FFFF00'
-    if aqi <= 300: return 'Poor', '#FF7E00'
-    if aqi <= 400: return 'Very Poor', '#FF0000'
-    return 'Severe', '#99004C'
-
-# =========================
-# UTIL: CITY ENCODING
+# UTIL FUNCTIONS
 # =========================
 
 def encode_city(city: str):
@@ -123,9 +116,13 @@ def encode_city(city: str):
     except:
         raise HTTPException(400, f"Unknown city: {city}")
 
-# =========================
-# UTIL: FETCH LAG FEATURES
-# =========================
+def aqi_to_category(aqi: float):
+    if aqi <= 50: return 'Good', '#00E400'
+    if aqi <= 100: return 'Satisfactory', '#92D050'
+    if aqi <= 200: return 'Moderate', '#FFFF00'
+    if aqi <= 300: return 'Poor', '#FF7E00'
+    if aqi <= 400: return 'Very Poor', '#FF0000'
+    return 'Severe', '#99004C'
 
 def get_lag_features(city: str):
     try:
@@ -148,16 +145,12 @@ def get_lag_features(city: str):
         raise HTTPException(500, "Failed to fetch lag data")
 
 # =========================
-# HEALTH
+# ROUTES
 # =========================
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "models_loaded": True}
-
-# =========================
-# CITIES
-# =========================
+    return {"status": "ok"}
 
 @app.get("/cities")
 def get_cities():
@@ -193,7 +186,6 @@ def forecast(data: dict):
 
     df = pd.DataFrame([features])
 
-    # LOG TRANSFORM
     for col in LOG_COLS:
         df[col] = np.log1p(df[col])
 
@@ -226,29 +218,25 @@ def classify(data: dict):
     city = data["city"]
     city_enc = encode_city(city)
 
-    features = {
+    df = pd.DataFrame([{
         "pm2_5_ugm3": data["pm2_5"],
         "pm10_ugm3": data["pm10"],
         "co_ugm3": data["co"],
         "o3_ugm3": data["o3"],
         "no2_ugm3": data["no2"],
         "city_enc": city_enc
-    }
-
-    df = pd.DataFrame([features])[CLF_FEATURES]
+    }])[CLF_FEATURES]
 
     pred_internal = models['classifier'].predict(df)[0]
     pred_mapped = label_map_from_xgb[pred_internal]
 
     category = INT_TO_CAT[pred_mapped]
-    color = CAT_COLORS[category]
 
     probs = models['classifier'].predict_proba(df)[0]
 
     return {
         "city": city,
         "predicted_category": category,
-        "color": color,
         "probabilities": {
             "Good": float(probs[0]),
             "Moderate": float(probs[1]),
@@ -258,14 +246,16 @@ def classify(data: dict):
     }
 
 # =========================
-# EXPLAIN
+# FORECAST EXPLAIN (SHAP)
 # =========================
 
-@app.post("/predict/explain")
-def explain(data: dict):
+@app.post("/predict/explain/forecast")
+def explain_forecast(data: dict):
 
     city = data["city"]
     city_enc = encode_city(city)
+
+    lag1, lag6, lag24 = get_lag_features(city)
 
     features = {
         "pm2_5_ugm3": data["pm2_5"],
@@ -273,16 +263,25 @@ def explain(data: dict):
         "co_ugm3": data["co"],
         "o3_ugm3": data["o3"],
         "no2_ugm3": data["no2"],
-        "city_enc": city_enc
+        "city_enc": city_enc,
+        "hour": data["hour"],
+        "month": data["month"],
+        "day_of_week": data["day_of_week"],
+        "is_weekend": data["is_weekend"],
+        "AQI_lag_1": lag1,
+        "AQI_lag_6": lag6,
+        "AQI_lag_24": lag24
     }
 
-    df = pd.DataFrame([features])[CLF_FEATURES]
+    df = pd.DataFrame([features])
 
-    pred_internal = models['classifier'].predict(df)[0]
-    shap_vals = models['explainer'].shap_values(df)
+    for col in LOG_COLS:
+        df[col] = np.log1p(df[col])
 
-    shap_for_class = shap_vals[0, :, pred_internal]
+    df = df[FORECAST_FEATURES]
+
+    shap_vals = models['explainer_6h'].shap_values(df)[0]
 
     return {
-        "shap_values": dict(zip(CLF_FEATURES, shap_for_class.tolist()))
+        "shap_values": dict(zip(FORECAST_FEATURES, shap_vals.tolist()))
     }
