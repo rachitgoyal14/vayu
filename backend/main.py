@@ -21,9 +21,20 @@ MODELS_DIR = os.path.abspath(os.path.join(BASE_DIR, "../models"))
 # =========================
 
 FORECAST_FEATURES = [
-    'pm2_5_ugm3', 'pm10_ugm3', 'co_ugm3', 'o3_ugm3', 'no2_ugm3',
-    'city_enc', 'hour', 'month', 'day_of_week', 'is_weekend',
-    'AQI_lag_1', 'AQI_lag_6', 'AQI_lag_24'
+    'pm2_5_ugm3',
+    'pm10_ugm3',
+    'co_ugm3',
+    'no2_ugm3',
+    'so2_ugm3',
+    'o3_ugm3',
+    'hour',
+    'day_of_week',
+    'month',
+    'is_weekend',
+    'city_enc',
+    'AQI_lag_1',
+    'AQI_lag_6',
+    'AQI_lag_24'
 ]
 
 CLF_FEATURES = [
@@ -52,7 +63,7 @@ async def lifespan(app: FastAPI):
 
     models['city_encoder'] = joblib.load(os.path.join(MODELS_DIR, 'city_encoder.pkl'))
 
-    print("✅ Models loaded")
+    print("----------------------------------------------- MODELS LOADED ---------------------------------------------------")
     yield
 
 
@@ -99,6 +110,7 @@ def forecast(data: dict):
         "pm2_5_ugm3": data["pm2_5"],
         "pm10_ugm3": data["pm10"],
         "co_ugm3": data["co"],
+        "so2_ugm3": data["so2"],
         "o3_ugm3": data["o3"],
         "no2_ugm3": data["no2"],
         "city_enc": city_enc,
