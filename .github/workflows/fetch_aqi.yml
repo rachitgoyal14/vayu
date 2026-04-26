@@ -43,10 +43,20 @@ jobs:
           git add forecaster/hourlyData.csv
           git diff --cached --quiet && echo "No changes" && exit 0
 
-          git commit -m "Update AQI data [auto]"
-
           for i in 1 2 3 4 5; do
-            git pull --rebase origin main && git push origin HEAD && break
+            git pull --rebase origin main
+
+            git add forecaster/hourlyData.csv
+            git diff --cached --quiet && echo "No changes" && exit 0
+
+            git commit -m "Update AQI data [auto]" || true
+
+            git push origin HEAD && echo "Push succeeded" && exit 0
+
             echo "Retry $i failed, waiting..."
+            git reset --soft HEAD~1 2>/dev/null || true
             sleep $((i * 5))
           done
+
+          echo "All retries failed"
+          exit 1
