@@ -8,3 +8,5 @@ scikit-learn
 seaborn
 statsmodels
 xgboost
+python-dotenv
+requests
