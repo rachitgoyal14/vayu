@@ -7,3 +7,4 @@ imblearn
 scikit-learn
 seaborn
 statsmodels
+xgboost
