@@ -11,11 +11,6 @@ load_dotenv()
 API_KEY = os.getenv("OPENWEATHER_API_KEY")
 
 # -----------------------
-# Read existing data from data branch
-# -----------------------
-CSV_URL = "https://raw.githubusercontent.com/rachitgoyal14/vayu/data/forecaster/hourlyData.csv"
-
-# -----------------------
 # City coordinates (ALL 29)
 # -----------------------
 CITIES = {
@@ -154,29 +149,13 @@ def main():
 
     new_df = new_df[EXPECTED_COLUMNS]
 
-    # -----------------------
-    # Read old data from data branch URL
-    # -----------------------
-    try:
-        old_df = pd.read_csv(CSV_URL)
-        print(f"Loaded {len(old_df)} existing rows from data branch")
-    except Exception:
-        old_df = pd.DataFrame()
-        print("No existing CSV found, starting fresh")
-
-    # -----------------------
-    # Append + Deduplicate
-    # -----------------------
-    df = pd.concat([old_df, new_df])
-    df = df.drop_duplicates(subset=["city", "datetime"])
-    df = df.sort_values(["city", "datetime"]).reset_index(drop=True)
-
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
     file_path = os.path.join(BASE_DIR, "hourlyData.csv")
 
-    df.to_csv(file_path, index=False)
-
-    print(f"Saved {len(df)} total rows to CSV")
+    # Save only the freshly fetched 29 rows
+    # Merging with old data is handled by the GitHub Actions workflow
+    new_df.to_csv(file_path, index=False)
+    print(f"Fetched {len(new_df)} new rows")
 
 if __name__ == "__main__":
     main()
