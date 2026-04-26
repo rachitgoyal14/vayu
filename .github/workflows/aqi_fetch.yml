@@ -1,4 +1,4 @@
-name: Hourly AQI Data Fetch
+name: Hourly AQI Data Fetch v2
 
 on:
   schedule:
@@ -10,7 +10,7 @@ permissions:
 
 concurrency:
   group: aqi-fetch
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   fetch-data:
@@ -21,6 +21,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           persist-credentials: true
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -40,23 +41,12 @@ jobs:
           git config --global user.name "github-actions"
           git config --global user.email "actions@github.com"
 
+          git checkout data 2>/dev/null || git checkout --orphan data
+
+          git checkout main -- forecaster/hourlyData.csv
+
           git add forecaster/hourlyData.csv
           git diff --cached --quiet && echo "No changes" && exit 0
 
-          for i in 1 2 3 4 5; do
-            git pull --rebase origin main
-
-            git add forecaster/hourlyData.csv
-            git diff --cached --quiet && echo "No changes" && exit 0
-
-            git commit -m "Update AQI data [auto]" || true
-
-            git push origin HEAD && echo "Push succeeded" && exit 0
-
-            echo "Retry $i failed, waiting..."
-            git reset --soft HEAD~1 2>/dev/null || true
-            sleep $((i * 5))
-          done
-
-          echo "All retries failed"
-          exit 1
+          git commit -m "Update AQI data [auto] $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          git push origin data --force
