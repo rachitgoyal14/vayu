@@ -11,6 +11,11 @@ load_dotenv()
 API_KEY = os.getenv("OPENWEATHER_API_KEY")
 
 # -----------------------
+# Read existing data from data branch
+# -----------------------
+CSV_URL = "https://raw.githubusercontent.com/rachitgoyal14/vayu/data/forecaster/hourlyData.csv"
+
+# -----------------------
 # City coordinates (ALL 29)
 # -----------------------
 CITIES = {
@@ -137,7 +142,7 @@ def main():
         except Exception as e:
             print(f"Error fetching {city}: {e}")
 
-    df = pd.DataFrame(rows)
+    new_df = pd.DataFrame(rows)
 
     EXPECTED_COLUMNS = [
         "city", "datetime",
@@ -147,24 +152,31 @@ def main():
         "is_weekend"
     ]
 
-    df = df[EXPECTED_COLUMNS]
+    new_df = new_df[EXPECTED_COLUMNS]
 
-    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-    file_path = os.path.join(BASE_DIR, "hourlyData.csv")
+    # -----------------------
+    # Read old data from data branch URL
+    # -----------------------
+    try:
+        old_df = pd.read_csv(CSV_URL)
+        print(f"Loaded {len(old_df)} existing rows from data branch")
+    except Exception:
+        old_df = pd.DataFrame()
+        print("No existing CSV found, starting fresh")
 
     # -----------------------
     # Append + Deduplicate
     # -----------------------
-    if os.path.exists(file_path):
-        old_df = pd.read_csv(file_path)
-        df = pd.concat([old_df, df])
+    df = pd.concat([old_df, new_df])
+    df = df.drop_duplicates(subset=["city", "datetime"])
+    df = df.sort_values(["city", "datetime"]).reset_index(drop=True)
 
-        # 🔥 remove duplicates (important for cron/GH actions)
-        df = df.drop_duplicates(subset=["city", "datetime"])
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    file_path = os.path.join(BASE_DIR, "hourlyData.csv")
 
     df.to_csv(file_path, index=False)
 
-    print("Data saved successfully")
+    print(f"Saved {len(df)} total rows to CSV")
 
 if __name__ == "__main__":
     main()

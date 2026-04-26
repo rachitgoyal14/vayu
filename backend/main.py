@@ -74,13 +74,13 @@ models = {}
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    models['xgb_6h'] = joblib.load('models/xgb_6h.pkl')
-    models['xgb_12h'] = joblib.load('models/xgb_12h.pkl')
-    models['xgb_24h'] = joblib.load('models/xgb_24h.pkl')
+    models['xgb_6h'] = joblib.load(os.path.join(MODELS_DIR, 'xgb_6h.pkl'))
+    models['xgb_12h'] = joblib.load(os.path.join(MODELS_DIR, 'xgb_12h.pkl'))
+    models['xgb_24h'] = joblib.load(os.path.join(MODELS_DIR, 'xgb_24h.pkl'))
 
-    models['classifier'] = joblib.load('models/best_classifier.pkl')
-    models['explainer'] = joblib.load('models/shap_explainer.pkl')
-    models['city_encoder'] = joblib.load('models/city_encoder.pkl')
+    models['classifier'] = joblib.load(os.path.join(MODELS_DIR, 'best_classifier.pkl'))
+    models['explainer'] = joblib.load(os.path.join(MODELS_DIR, 'shap_explainer.pkl'))
+    models['city_encoder'] = joblib.load(os.path.join(MODELS_DIR, 'city_encoder.pkl'))
 
     print("✅ Models loaded")
 
