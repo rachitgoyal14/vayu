@@ -1,0 +1,40 @@
+@import "tailwindcss";
+@import "leaflet/dist/leaflet.css";
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    background-color: #0A0606;
+  }
+  
+  body {
+    @apply antialiased text-slate-100;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #0A0606;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #1e1b1b;
+    border-radius: 10px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #2e2b2b;
+  }
+}
+
+@keyframes cloud-slow {
+  0%, 100% { transform: translateX(-10%) rotate(12deg); }
+  50% { transform: translateX(10%) rotate(10deg); }
+}
+
+.animate-cloud-slow {
+  animation: cloud-slow 20s ease-in-out infinite;
+}
+
+.glass {
+  @apply backdrop-blur-2xl bg-white/[0.03] border border-white/10;
+}

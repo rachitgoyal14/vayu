@@ -1,0 +1,6 @@
+{
+  "name": "VAAYU: Intelligence AQI Dashboard",
+  "description": "A cinematic dark-themed AQI intelligence dashboard for India featuring 3D atmospheric visuals, predictive forecasting, and real-time air quality analytics.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["AI-powered forecasting", "3D Visualization", "Real-time monitoring"]
+}
