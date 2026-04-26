@@ -15,6 +15,7 @@ interface TrendChartProps {
 
 export default function TrendChart({ data, category, statusLabel }: TrendChartProps) {
   const color = getAQIColor(category);
+  const trendColor = "#ef4444";
 
   return (
     <motion.div 
@@ -83,8 +84,8 @@ export default function TrendChart({ data, category, statusLabel }: TrendChartPr
               {data.map((entry, index) => (
                 <Cell 
                   key={`cell-${index}`} 
-                  fill={entry.value > 100 ? color : 'rgba(255,255,255,0.1)'} 
-                  fillOpacity={0.8}
+                  fill={trendColor}
+                  fillOpacity={Math.max(0.25, Math.min(1, entry.value / 220))}
                 />
               ))}
             </Bar>

@@ -18,6 +18,7 @@ interface CityGridProps {
 
 interface CityCardState {
   isLoading: boolean;
+  hasError: boolean;
   aqi: number;
   category: ReturnType<typeof getCategory>;
   pm25: number;
@@ -53,6 +54,7 @@ export default function CityGrid({ onCitySelect, selectedCity, cityAQI }: CityGr
     mainCities.forEach((city) => {
       loadingState[city.id] = {
         isLoading: true,
+        hasError: false,
         aqi: 0,
         category: "Moderate",
         pm25: 0,
@@ -70,21 +72,24 @@ export default function CityGrid({ onCitySelect, selectedCity, cityAQI }: CityGr
               cityId: city.id,
               state: {
                 isLoading: false,
+                hasError: false,
                 aqi: Math.round(data.current_aqi),
                 category: getCategory(data.current_aqi),
                 pm25: Math.round(data.pollutants.pm2_5),
                 pm10: Math.round(data.pollutants.pm10),
               } satisfies CityCardState,
             };
-          } catch {
+          } catch (error) {
+            console.error(`CityGrid fetch failed for ${city.id}:`, error);
             return {
               cityId: city.id,
               state: {
                 isLoading: false,
-                aqi: 0,
+                hasError: true,
+                aqi: -1,
                 category: "Moderate",
-                pm25: 0,
-                pm10: 0,
+                pm25: -1,
+                pm10: -1,
               } satisfies CityCardState,
             };
           }
@@ -114,6 +119,7 @@ export default function CityGrid({ onCitySelect, selectedCity, cityAQI }: CityGr
       ...prev,
       [selectedCity.id]: {
         isLoading: false,
+        hasError: false,
         aqi: Math.round(cityAQI.current_aqi),
         category: getCategory(cityAQI.current_aqi),
         pm25: Math.round(cityAQI.pollutants.pm2_5),
@@ -121,6 +127,8 @@ export default function CityGrid({ onCitySelect, selectedCity, cityAQI }: CityGr
       },
     }));
   }, [cityAQI, selectedCity.id]);
+
+  const isGridLoading = mainCities.some((city) => cityStates[city.id]?.isLoading);
 
   return (
     <div className="space-y-8">
@@ -133,11 +141,21 @@ export default function CityGrid({ onCitySelect, selectedCity, cityAQI }: CityGr
           Primary Nodes: {mainCities.length}
         </div>
       </div>
+      {isGridLoading && (
+        <div className="h-1 w-full rounded-full bg-white/5 overflow-hidden">
+          <motion.div
+            className="h-full w-1/3 bg-red-600/60"
+            animate={{ x: ["-40%", "240%"] }}
+            transition={{ duration: 1.2, repeat: Infinity, ease: "linear" }}
+          />
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
         {mainCities.map((city, idx) => {
           const stats = cityStates[city.id] ?? {
             isLoading: true,
+            hasError: false,
             aqi: 0,
             category: "Moderate" as const,
             pm25: 0,
@@ -171,6 +189,8 @@ export default function CityGrid({ onCitySelect, selectedCity, cityAQI }: CityGr
                 <div className="space-y-1">
                   {stats.isLoading ? (
                     <div className="h-9 w-20 rounded-lg bg-white/10 animate-pulse" />
+                  ) : stats.hasError ? (
+                    <span className="text-lg font-black tracking-tighter text-amber-500/80">OFF</span>
                   ) : (
                     <span
                       className="text-3xl font-black tracking-tighter tabular-nums"
@@ -183,6 +203,8 @@ export default function CityGrid({ onCitySelect, selectedCity, cityAQI }: CityGr
                     <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: color }} />
                     {stats.isLoading ? (
                       <div className="h-3 w-20 rounded bg-white/10 animate-pulse" />
+                    ) : stats.hasError ? (
+                      <span className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Sensor Offline</span>
                     ) : (
                       <span className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">
                         {stats.category}
@@ -205,6 +227,8 @@ export default function CityGrid({ onCitySelect, selectedCity, cityAQI }: CityGr
                     <span className="text-slate-500 text-[8px] font-bold uppercase">PM2.5</span>
                     {stats.isLoading ? (
                       <div className="h-3 w-10 rounded bg-white/10 animate-pulse mt-1" />
+                    ) : stats.hasError ? (
+                      <span className="text-slate-300 text-[10px] font-bold tabular-nums">--</span>
                     ) : (
                       <span className="text-slate-300 text-[10px] font-bold tabular-nums">{stats.pm25}</span>
                     )}
@@ -213,6 +237,8 @@ export default function CityGrid({ onCitySelect, selectedCity, cityAQI }: CityGr
                     <span className="text-slate-500 text-[8px] font-bold uppercase">PM10</span>
                     {stats.isLoading ? (
                       <div className="h-3 w-10 rounded bg-white/10 animate-pulse mt-1" />
+                    ) : stats.hasError ? (
+                      <span className="text-slate-300 text-[10px] font-bold tabular-nums">--</span>
                     ) : (
                       <span className="text-slate-300 text-[10px] font-bold tabular-nums">{stats.pm10}</span>
                     )}

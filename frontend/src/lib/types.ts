@@ -39,6 +39,16 @@ export interface SHAPResult {
   shap_values: Record<string, number>;
 }
 
+export interface TrendPoint {
+  datetime?: string;
+  time: string;
+  value: number;
+}
+
+export interface CitiesHistory24hResult {
+  cities: Record<string, TrendPoint[]>;
+}
+
 export interface CityAQIData {
   city: City;
   pollutants: PollutantData;

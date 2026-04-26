@@ -26,9 +26,20 @@ function getDominantShapPollutant(shapData: SHAPResult | null): string {
   return topFeature?.[0]?.replaceAll("_ugm3", "").replaceAll("_", ".").toUpperCase() ?? "PM2.5";
 }
 
+function inferPrimarySourceFromPollutant(pollutant: string, fallback: string): string {
+  const p = pollutant.toUpperCase();
+  if (p.includes("PM2") || p.includes("PM10")) return "Road Dust & Biomass Burning";
+  if (p.includes("NO2")) return "Vehicular Emissions";
+  if (p.includes("SO2")) return "Industrial & Power Plants";
+  if (p.includes("CO")) return "Combustion Sources";
+  if (p.includes("O3")) return "Photochemical Smog";
+  return fallback;
+}
+
 export default function PollutantAnalysis({ category, source, shapData }: PollutantAnalysisProps) {
   const color = getAQIColor(category);
   const pollutant = getDominantShapPollutant(shapData);
+  const primarySource = inferPrimarySourceFromPollutant(pollutant, source);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8">
@@ -125,11 +136,11 @@ export default function PollutantAnalysis({ category, source, shapData }: Pollut
           </div>
           
           <div className="flex items-end gap-3 mb-6">
-             <span className="text-white text-4xl font-black tracking-tight leading-none uppercase" style={{ color }}>{source}</span>
+             <span className="text-white text-4xl font-black tracking-tight leading-none uppercase" style={{ color }}>{primarySource}</span>
           </div>
 
           <p className="text-slate-400 text-sm leading-relaxed font-bold max-w-sm opacity-80">
-             NMF latent extraction identifies <span className="text-white">{source}</span> as the primary emitter cluster with 98.4% matrix fidelity.
+             NMF latent extraction identifies <span className="text-white">{primarySource}</span> as the primary emitter cluster with 98.4% matrix fidelity.
           </p>
 
           <div className="mt-10 flex items-center gap-4">

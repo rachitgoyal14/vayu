@@ -1,5 +1,6 @@
 import type { City } from "./cityData";
 import type {
+  CitiesHistory24hResult,
   CityAQIData,
   ClassifyResult,
   ForecastResult,
@@ -18,6 +19,24 @@ interface OpenWeatherResponse {
   list?: Array<{
     components?: Partial<RawPollutants>;
   }>;
+}
+
+interface RealtimeForecastResponse {
+  city: string;
+  datetime?: string;
+  current: {
+    pm2_5: number;
+    pm10: number;
+    co: number;
+    no2: number;
+    so2: number;
+    o3: number;
+    hour: number;
+    month: number;
+    day_of_week: number;
+    is_weekend: 0 | 1;
+  };
+  forecast: ForecastResult["forecast"];
 }
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -92,6 +111,7 @@ export async function fetchPollutants(lat: number, lng: number): Promise<Polluta
     `?lat=${lat}&lon=${lng}&appid=${OPENWEATHER_API_KEY}`;
 
   const data = await requestJSON<OpenWeatherResponse>(url);
+  console.log("OWM:", data);
   const components = data.list?.[0]?.components;
 
   if (!components) {
@@ -118,6 +138,7 @@ export async function fetchForecast(
   assertApiBaseUrl();
 
   const payload = createPredictionPayload(city, pollutants);
+  console.log("Sending payload:", payload);
   return requestJSON<ForecastResult>(`${API_BASE_URL}/predict/forecast`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -132,6 +153,7 @@ export async function fetchClassification(
   assertApiBaseUrl();
 
   const payload = createPredictionPayload(city, pollutants);
+  console.log("Sending payload:", payload);
   return requestJSON<ClassifyResult>(`${API_BASE_URL}/predict/classify`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -143,25 +165,72 @@ export async function fetchSHAP(city: string, pollutants: PollutantData): Promis
   assertApiBaseUrl();
 
   const payload = createPredictionPayload(city, pollutants);
-  return requestJSON<SHAPResult>(`${API_BASE_URL}/predict/explain/forecast`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
+  console.log("Sending payload:", payload);
+  try {
+    return await requestJSON<SHAPResult>(`${API_BASE_URL}/predict/explain/forecast`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+  } catch (error) {
+    // Keep UI stable if explain endpoint is temporarily unavailable.
+    if (error instanceof ApiError && error.source === "backend") {
+      console.warn("SHAP endpoint unavailable; continuing without explanation.");
+      return { shap_values: {} };
+    }
+    throw error;
+  }
 }
 
 export async function fetchCityAQI(city: City): Promise<CityAQIData> {
-  const pollutants = await fetchPollutants(city.lat, city.lng);
-  const [forecast, classification] = await Promise.all([
-    fetchForecast(city.id, pollutants),
-    fetchClassification(city.id, pollutants),
-  ]);
+  assertApiBaseUrl();
+
+  const realtime = await requestJSON<RealtimeForecastResponse>(
+    `${API_BASE_URL}/predict/forecast/realtime`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ city: city.id }),
+    },
+  );
+
+  const pollutants: PollutantData = {
+    pm2_5: Number(realtime.current.pm2_5 ?? 0),
+    pm10: Number(realtime.current.pm10 ?? 0),
+    co: Number(realtime.current.co ?? 0),
+    no2: Number(realtime.current.no2 ?? 0),
+    so2: Number(realtime.current.so2 ?? 0),
+    o3: Number(realtime.current.o3 ?? 0),
+    hour: Number(realtime.current.hour ?? getTimeFeatures().hour),
+    month: Number(realtime.current.month ?? getTimeFeatures().month),
+    day_of_week: Number(realtime.current.day_of_week ?? getTimeFeatures().day_of_week),
+    is_weekend: Number(realtime.current.is_weekend ?? getTimeFeatures().is_weekend) as 0 | 1,
+  };
+
+  const classification = await fetchClassification(city.id, pollutants);
 
   return {
     city,
     pollutants,
-    forecast,
+    forecast: {
+      city: realtime.city,
+      forecast: realtime.forecast,
+    },
     classification,
     current_aqi: computeAQI(pollutants),
   };
+}
+
+export async function fetchRealtimeForecast(city: string): Promise<RealtimeForecastResponse> {
+  assertApiBaseUrl();
+  return requestJSON<RealtimeForecastResponse>(`${API_BASE_URL}/predict/forecast/realtime`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ city: city.toLowerCase() }),
+  });
+}
+
+export async function fetchAllCities24hHistory(): Promise<CitiesHistory24hResult> {
+  assertApiBaseUrl();
+  return requestJSON<CitiesHistory24hResult>(`${API_BASE_URL}/history/24h/all`);
 }

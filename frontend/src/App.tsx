@@ -13,9 +13,10 @@ import TrendChart from "./components/TrendChart";
 import CityGrid from "./components/CityGrid";
 import PollutantAnalysis from "./components/PollutantAnalysis";
 import { CITIES, City } from "./lib/cityData";
-import { ApiError, fetchClassification, fetchForecast, fetchPollutants, fetchSHAP } from "./lib/api";
-import type { CityAQIData, SHAPResult } from "./lib/types";
+import { ApiError, fetchAllCities24hHistory, fetchCityAQI, fetchRealtimeForecast, fetchSHAP } from "./lib/api";
+import type { CitiesHistory24hResult, CityAQIData, SHAPResult, TrendPoint } from "./lib/types";
 import { computeAQI, getAQIColor, getCategory, mapBackendCategory } from "./lib/aqiUtils";
+import seedHistoryCache from "./lib/aqiHistoryCache.json";
 
 type PredictionWindow = "6h" | "12h" | "24h";
 
@@ -23,6 +24,8 @@ const EMPTY_TREND = Array.from({ length: 24 }).map((_, i) => ({
   time: `${i.toString().padStart(2, "0")}:00`,
   value: 0,
 }));
+const HISTORY_CACHE_KEY = "vayu:aqi-history-24h";
+const CITY_REFRESH_INTERVAL_MS = 5 * 60 * 1000;
 
 function buildTrend(currentAQI: number, forecast: CityAQIData["forecast"]["forecast"]) {
   const anchors = [
@@ -47,6 +50,50 @@ function buildTrend(currentAQI: number, forecast: CityAQIData["forecast"]["forec
   });
 }
 
+function normalizeTrendTo24(points: TrendPoint[] | undefined, fallbackValue: number): TrendPoint[] {
+  const now = new Date();
+  now.setMinutes(0, 0, 0);
+
+  const slots = Array.from({ length: 24 }).map((_, i) => {
+    const dt = new Date(now);
+    dt.setHours(now.getHours() - (23 - i));
+    return dt;
+  });
+
+  const known = (points ?? [])
+    .map((p) => {
+      if (!p.datetime) return null;
+      const dt = new Date(p.datetime);
+      if (Number.isNaN(dt.getTime())) return null;
+      dt.setMinutes(0, 0, 0);
+      return { ts: dt.getTime(), value: p.value };
+    })
+    .filter((v): v is { ts: number; value: number } => v !== null)
+    .sort((a, b) => a.ts - b.ts);
+
+  const valuesBySlot = slots.map((slot) => {
+    const ts = slot.getTime();
+    const exact = known.find((k) => k.ts === ts);
+    if (exact) return exact.value;
+
+    const left = [...known].reverse().find((k) => k.ts < ts);
+    const right = known.find((k) => k.ts > ts);
+
+    if (left && right) {
+      const ratio = (ts - left.ts) / (right.ts - left.ts);
+      return left.value + (right.value - left.value) * ratio;
+    }
+    if (left) return left.value;
+    if (right) return right.value;
+    return fallbackValue;
+  });
+
+  return slots.map((slot, i) => ({
+    time: `${slot.getHours().toString().padStart(2, "0")}:00`,
+    value: Math.round(valuesBySlot[i]),
+  }));
+}
+
 export default function App() {
   const [selectedCity, setSelectedCity] = useState<City>(CITIES[9]); // Delhi
   const [predictionType, setPredictionType] = useState<PredictionWindow>("6h");
@@ -57,16 +104,101 @@ export default function App() {
   const [sensorOffline, setSensorOffline] = useState(false);
   const [predictionOffline, setPredictionOffline] = useState(false);
   const [cityCache, setCityCache] = useState<Record<string, CityAQIData>>({});
+  const [historyCache, setHistoryCache] = useState<Record<string, TrendPoint[]>>(
+    (seedHistoryCache as CitiesHistory24hResult).cities ?? {},
+  );
   const cityCacheRef = useRef<Record<string, CityAQIData>>({});
+  const cityAQIRef = useRef<CityAQIData | null>(null);
 
   useEffect(() => {
     cityCacheRef.current = cityCache;
   }, [cityCache]);
 
   useEffect(() => {
+    cityAQIRef.current = cityAQI;
+  }, [cityAQI]);
+
+  useEffect(() => {
+    const fromStorage = localStorage.getItem(HISTORY_CACHE_KEY);
+    if (fromStorage) {
+      try {
+        const parsed = JSON.parse(fromStorage) as CitiesHistory24hResult;
+        if (parsed?.cities) {
+          setHistoryCache(parsed.cities);
+          return;
+        }
+      } catch {
+        // ignore invalid cache and refetch below
+      }
+    }
+
+    const loadHistory = async () => {
+      try {
+        const allHistory = await fetchAllCities24hHistory();
+        setHistoryCache(allHistory.cities);
+        localStorage.setItem(HISTORY_CACHE_KEY, JSON.stringify(allHistory));
+      } catch (error) {
+        console.warn("24h history preload failed:", error);
+      }
+    };
+
+    void loadHistory();
+  }, []);
+
+  useEffect(() => {
     // Smooth scroll to top on city change
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [selectedCity]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const refreshForecastForSelection = async () => {
+      const currentCityAQI = cityAQIRef.current;
+      if (!currentCityAQI) return;
+
+      try {
+        const realtime = await fetchRealtimeForecast(selectedCity.id);
+        if (!isMounted) return;
+
+        setPredictionOffline(false);
+        setCityAQI((prev) => {
+          if (!prev) return prev;
+          const nextPollutants = {
+            ...prev.pollutants,
+            pm2_5: realtime.current.pm2_5,
+            pm10: realtime.current.pm10,
+            co: realtime.current.co,
+            no2: realtime.current.no2,
+            so2: realtime.current.so2,
+            o3: realtime.current.o3,
+            hour: realtime.current.hour,
+            month: realtime.current.month,
+            day_of_week: realtime.current.day_of_week,
+            is_weekend: realtime.current.is_weekend,
+          };
+          const next = {
+            ...prev,
+            pollutants: nextPollutants,
+            forecast: { city: realtime.city, forecast: realtime.forecast },
+            current_aqi: computeAQI(nextPollutants),
+          };
+          setCityCache((cache) => ({ ...cache, [selectedCity.id]: next }));
+          return next;
+        });
+      } catch {
+        if (!isMounted) return;
+        setPredictionOffline(true);
+        setErrorMessage("Prediction engine offline");
+      }
+    };
+
+    void refreshForecastForSelection();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [predictionType, selectedCity.id]);
 
   useEffect(() => {
     let isMounted = true;
@@ -78,75 +210,26 @@ export default function App() {
       setPredictionOffline(false);
 
       try {
-        const pollutants = await fetchPollutants(selectedCity.lat, selectedCity.lng);
-        const [forecastResult, classificationResult, shapResult] = await Promise.allSettled([
-          fetchForecast(selectedCity.id, pollutants),
-          fetchClassification(selectedCity.id, pollutants),
-          fetchSHAP(selectedCity.id, pollutants),
-        ]);
-
+        const nextCityData = await fetchCityAQI(selectedCity);
+        const shapResult = await fetchSHAP(selectedCity.id, nextCityData.pollutants);
         if (!isMounted) return;
-
-        const backendFailed =
-          forecastResult.status === "rejected" || classificationResult.status === "rejected";
-
-        if (backendFailed) {
-          setPredictionOffline(true);
-          setErrorMessage("Prediction engine offline");
-
-          // Keep last known city model output if backend is unavailable.
-          const cached = cityCacheRef.current[selectedCity.id] ?? null;
-          if (cached) {
-            setCityAQI({
-              ...cached,
-              pollutants,
-              current_aqi: cached.current_aqi,
-            });
-          } else {
-            setCityAQI((prev) =>
-              prev
-                ? {
-                    ...prev,
-                    pollutants,
-                    current_aqi: prev.current_aqi,
-                  }
-                : null,
-            );
-          }
-
-          if (shapResult.status === "fulfilled") {
-            setShapData(shapResult.value);
-          }
-          return;
-        }
-
-        const nextCityData: CityAQIData = {
-          city: selectedCity,
-          pollutants,
-          forecast: forecastResult.value,
-          classification: classificationResult.value,
-          current_aqi: computeAQI(pollutants),
-        };
 
         setCityAQI(nextCityData);
         setCityCache((prev) => ({ ...prev, [selectedCity.id]: nextCityData }));
-
-        if (shapResult.status === "fulfilled") {
-          setShapData(shapResult.value);
-        }
+        setShapData(shapResult);
       } catch (error) {
         if (!isMounted) return;
-        const isSensorError = error instanceof ApiError && error.source === "openweather";
-        if (isSensorError) {
+        const message = error instanceof Error ? error.message : "Unable to fetch live AQI data.";
+        setErrorMessage(message);
+        if (error instanceof ApiError && error.source === "backend") {
+          setPredictionOffline(true);
+        }
+        if (error instanceof ApiError && error.source === "openweather") {
           setSensorOffline(true);
-          setErrorMessage("Sensor offline");
-          const cached = cityCacheRef.current[selectedCity.id] ?? null;
-          if (cached) {
-            setCityAQI(cached);
-          }
-        } else {
-          const message = error instanceof Error ? error.message : "Unable to fetch live AQI data.";
-          setErrorMessage(message);
+        }
+        const cached = cityCacheRef.current[selectedCity.id] ?? null;
+        if (cached) {
+          setCityAQI(cached);
         }
       } finally {
         if (isMounted) {
@@ -158,7 +241,7 @@ export default function App() {
     void loadCityData();
     const timer = window.setInterval(() => {
       void loadCityData();
-    }, 30000);
+    }, CITY_REFRESH_INTERVAL_MS);
 
     return () => {
       isMounted = false;
@@ -183,6 +266,8 @@ export default function App() {
       ? mapBackendCategory(activeBackendCategory)
       : getCategory(currentAQI);
 
+    const trendFromCache = historyCache[selectedCity.id];
+
     return {
       aqi: Math.round(currentAQI),
       category: mappedCategory,
@@ -192,9 +277,14 @@ export default function App() {
         ? `${cityAQI.classification.predicted_category} Atmospheric Pattern`
         : "Live Sensor Fusion",
       forecast: forecastData,
-      trend: forecast ? buildTrend(currentAQI, forecast) : EMPTY_TREND,
+      trend: normalizeTrendTo24(
+        trendFromCache && trendFromCache.length > 0
+          ? trendFromCache
+          : (forecast ? buildTrend(currentAQI, forecast) : EMPTY_TREND),
+        currentAQI,
+      ),
     };
-  }, [cityAQI, predictionType, shapData]);
+  }, [cityAQI, historyCache, predictionType, selectedCity.id, shapData]);
 
   return (
     <div className="min-h-screen bg-[#0A0606] text-slate-100 selection:bg-red-600 selection:text-white">
