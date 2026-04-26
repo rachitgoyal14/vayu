@@ -2,13 +2,12 @@ import pandas as pd
 import os
 
 # -----------------------
-# Load CSV (robust path)
+# Load CSV from GitHub data branch
 # -----------------------
-def load_data():
-    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-    file_path = os.path.join(BASE_DIR, "hourlyData.csv")
+CSV_URL = "https://raw.githubusercontent.com/rachitgoyal14/vayu/data/forecaster/hourlyData.csv"
 
-    df = pd.read_csv(file_path)
+def load_data():
+    df = pd.read_csv(CSV_URL)
     df["datetime"] = pd.to_datetime(df["datetime"])
     return df
 
@@ -39,27 +38,17 @@ def get_latest_features(city_df):
     if len(city_df) == 0:
         raise ValueError("No data available for this city.")
 
-    # Fill missing lag values forward (temporary)
     city_df = city_df.ffill()
 
     latest_row = city_df.iloc[-1]
 
-    # -----------------------
-    # Safe fallback function
-    # -----------------------
     def safe(val, fallback):
         return val if pd.notna(val) else fallback
 
-    # -----------------------
-    # Handle lag fallbacks
-    # -----------------------
     lag_1 = latest_row["AQI_lag_1"]
     lag_6 = safe(latest_row["AQI_lag_6"], lag_1)
     lag_24 = safe(latest_row["AQI_lag_24"], lag_6)
 
-    # -----------------------
-    # FINAL FEATURES
-    # -----------------------
     features = {
         "pm2_5_ugm3": latest_row["pm2_5_ugm3"],
         "pm10_ugm3": latest_row["pm10_ugm3"],
