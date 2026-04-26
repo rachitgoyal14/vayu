@@ -79,7 +79,9 @@ async def lifespan(app: FastAPI):
     models['xgb_24h'] = joblib.load(os.path.join(MODELS_DIR, 'xgb_24h.pkl'))
 
     models['classifier'] = joblib.load(os.path.join(MODELS_DIR, 'best_classifier.pkl'))
-    models['explainer'] = joblib.load(os.path.join(MODELS_DIR, 'shap_explainer.pkl'))
+    models['explainer_6h'] = joblib.load(os.path.join(MODELS_DIR, 'shap_explainer_6h.pkl'))
+    models['explainer_12h'] = joblib.load(os.path.join(MODELS_DIR, 'shap_explainer_12h.pkl'))
+    models['explainer_24h'] = joblib.load(os.path.join(MODELS_DIR, 'shap_explainer_24h.pkl'))
     models['city_encoder'] = joblib.load(os.path.join(MODELS_DIR, 'city_encoder.pkl'))
 
     print("✅ Models loaded")

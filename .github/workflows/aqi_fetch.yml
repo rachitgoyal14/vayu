@@ -43,6 +43,8 @@ jobs:
 
           cp forecaster/hourlyData.csv /tmp/hourlyData_new.csv
 
+          git stash
+
           git checkout data
           cp forecaster/hourlyData.csv /tmp/hourlyData_old.csv 2>/dev/null || touch /tmp/hourlyData_old.csv
 
