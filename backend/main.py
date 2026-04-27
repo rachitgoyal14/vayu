@@ -531,14 +531,14 @@ def forecast_realtime(data: dict):
         print("Fetching latest row from Supabase...")
         latest = _get_latest_city_row(city)
 
-        print("Fetching WAQI (AQI + pollutants)...")
+        print("Fetching WAQI (AQI display value only)...")
         try:
             waqi = _fetch_waqi(city)
         except Exception as e:
             print(f"WAQI fetch error: {e}")
-            waqi = {"aqi": None, "pm2_5": 0.0, "pm10": 0.0, "co": 0.0, "no2": 0.0, "so2": 0.0, "o3": 0.0}
+            waqi = {"aqi": None}
 
-        print(f"WAQI response: {waqi}")
+        print(f"WAQI AQI: {waqi.get('aqi')}")
 
         now = datetime.now()
         current_hour = now.hour
@@ -546,12 +546,16 @@ def forecast_realtime(data: dict):
         current_day_of_week = now.weekday()
         current_is_weekend = 1 if now.weekday() in [5, 6] else 0
 
-        pm2_5 = waqi.get("pm2_5") or 0.0
-        pm10  = waqi.get("pm10")  or 0.0
-        co    = waqi.get("co")    or 0.0
-        no2   = waqi.get("no2")   or 0.0
-        so2   = waqi.get("so2")   or 0.0
-        o3    = waqi.get("o3")    or 0.0
+        # Use Supabase pollutant readings for the model — these come from the
+        # cron job which stores real CPCB-scale concentrations. WAQI's
+        # reverse-mapped values are systematically lower and cause the model
+        # to predict unrealistically optimistic forecasts.
+        pm2_5 = float(latest.get("pm2_5_ugm3") or 0.0)
+        pm10  = float(latest.get("pm10_ugm3")  or 0.0)
+        co    = float(latest.get("co_ugm3")    or 0.0)
+        no2   = float(latest.get("no2_ugm3")   or 0.0)
+        so2   = float(latest.get("so2_ugm3")   or 0.0)
+        o3    = float(latest.get("o3_ugm3")    or 0.0)
 
         payload = {
             "city":        city,
@@ -567,11 +571,15 @@ def forecast_realtime(data: dict):
             "is_weekend":  current_is_weekend,
         }
 
-        print(f"Payload: {payload}")
+        print(f"Payload (from Supabase): {payload}")
         forecast_result = forecast(payload)
         print(f"Forecast result: {forecast_result}")
 
+        # current_aqi: prefer WAQI median (multi-station, authoritative display
+        # value), fall back to Supabase stored AQI, then lag feature.
         current_aqi = waqi.get("aqi")
+        if current_aqi is None:
+            current_aqi = latest.get("AQI")
         if current_aqi is None:
             try:
                 lag1, _, _ = get_lag_features(city)
@@ -583,7 +591,7 @@ def forecast_realtime(data: dict):
             "city":        city,
             "datetime":    now.isoformat(),
             "current_aqi": current_aqi,
-            "current": {
+"current": {
                 "pm2_5":        pm2_5,
                 "pm10":         pm10,
                 "co":           co,

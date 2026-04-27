@@ -24,6 +24,7 @@ interface OpenWeatherResponse {
 interface RealtimeForecastResponse {
   city: string;
   datetime?: string;
+  current_aqi?: number;
   current: {
     pm2_5: number;
     pm10: number;
@@ -217,7 +218,9 @@ export async function fetchCityAQI(city: City): Promise<CityAQIData> {
       forecast: realtime.forecast,
     },
     classification,
-    current_aqi: computeAQI(pollutants),
+    // Prefer the backend's current_aqi (WAQI multi-station median — authoritative).
+    // Fall back to local CPCB sub-index computation only if the field is missing.
+    current_aqi: realtime.current_aqi ?? computeAQI(pollutants),
   };
 }
 

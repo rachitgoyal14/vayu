@@ -15,20 +15,13 @@ export default function AQIMascot({ category }: AQIMascotProps) {
 
   const getEmoji = () => {
     switch (category) {
-      case "Good":
-        return "😇";
-      case "Moderate":
-        return "😐";
-      case "Poor":
-        return "😷";
-      case "Unhealthy":
-        return "🤢";
-      case "Severe":
-        return "🚨";
-      case "Hazardous":
-        return "💀";
-      default:
-        return "😐";
+      case "Good":        return "🌿"; // clean, fresh air
+      case "Satisfactory":return "🙂"; // acceptable, minor concern
+      case "Moderate":    return "😶‍🌫️"; // hazy, starting to feel it
+      case "Poor":        return "😷"; // wear a mask
+      case "Very Poor":   return "🤧"; // respiratory distress
+      case "Severe":      return "☠️"; // hazardous, stay indoors
+      default:            return "😐";
     }
   };
 
@@ -39,12 +32,12 @@ export default function AQIMascot({ category }: AQIMascotProps) {
         className="absolute w-44 h-44 rounded-full blur-[70px] opacity-20"
         style={{ backgroundColor: color }}
       />
-      
+
       {/* Rotating Background Ring - Very faint and slow */}
       <div className="absolute inset-8 rounded-full border border-dashed border-white/5 animate-spin-slow opacity-20" />
-      
-      {/* Emoji Container - Static Display */}
-      <motion.div 
+
+      {/* Emoji Container */}
+      <motion.div
         className="relative z-10 text-[80px] drop-shadow-[0_0_30px_rgba(0,0,0,0.5)] select-none"
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
@@ -59,4 +52,3 @@ export default function AQIMascot({ category }: AQIMascotProps) {
     </div>
   );
 }
-

@@ -19,7 +19,11 @@ interface AQICardProps {
 }
 
 function toAQICategory(value: string): AQICategory {
-  if (value === "Severe" || value === "Hazardous" || value === "Unhealthy") return value;
+  if (value === "Severe") return "Severe";
+  if (value === "Hazardous") return "Severe";
+  if (value === "Unhealthy") return "Poor";
+  if (value === "Unhealthy for Sensitive") return "Moderate";
+  if (value === "Very Unhealthy") return "Poor";
   return mapBackendCategory(value);
 }
 
