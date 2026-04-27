@@ -60,7 +60,7 @@ def build_payload(row: dict) -> dict:
         "pm2_5": row["pm2_5_ugm3"],
         "pm10": row["pm10_ugm3"],
         "co": row["co_ugm3"],
-        "so2": row["so2_ugm3"],  # ← add this
+        "so2": row["so2_ugm3"],
         "o3": row["o3_ugm3"],
         "no2": row["no2_ugm3"],
         "hour": row["hour"],
@@ -100,6 +100,7 @@ def test_forecast(payload: dict):
 
 def test_classify(payload: dict):
     print("\n--- Testing /predict/classify ---")
+    # Classifier doesn't need day_of_week/is_weekend, but it's harmless to send
     r = requests.post(f"{BASE_URL}/predict/classify", json=payload)
     assert r.status_code == 200, f"❌ Classify failed: {r.text}"
     result = r.json()

@@ -55,8 +55,8 @@ FORECAST_FEATURES = [
 ]
 
 CLF_FEATURES = [
-    'pm2_5_ugm3', 'pm10_ugm3', 'co_ugm3',
-    'o3_ugm3', 'no2_ugm3', 'city_enc'
+    'pm2_5_ugm3', 'pm10_ugm3', 'co_ugm3', 'no2_ugm3',
+    'so2_ugm3', 'o3_ugm3', 'month', 'hour'   
 ]
 
 LOG_COLS = ['pm2_5_ugm3', 'pm10_ugm3', 'co_ugm3', 'o3_ugm3', 'no2_ugm3']
@@ -629,10 +629,13 @@ def classify(data: dict):
         "pm2_5_ugm3": data["pm2_5"],
         "pm10_ugm3": data["pm10"],
         "co_ugm3": data["co"],
-        "o3_ugm3": data["o3"],
         "no2_ugm3": data["no2"],
+        "so2_ugm3": data.get("so2", 20.0),      # ← safe default
+        "o3_ugm3": data["o3"],
+        "month": data.get("month", 4),          # ← safe default
+        "hour": data.get("hour", 12),           # ← safe default
         "city_enc": city_enc
-    }])[CLF_FEATURES]
+    }])[CLF_FEATURES]   # ← now 8 features in correct order
 
     pred = models['classifier'].predict(df)[0]
 
@@ -644,22 +647,32 @@ def classify(data: dict):
 
 @app.post("/predict/explain/forecast")
 def explain_forecast(data: dict):
-    print("Incoming:", data)
+    print("Incoming for SHAP:", data)
 
     df = _build_forecast_dataframe(data)
     explainer = models.get("explainer_6h")
+    
     if explainer is None:
-        raise HTTPException(status_code=500, detail="SHAP explainer model not loaded")
+        raise HTTPException(status_code=500, detail="SHAP explainer not loaded")
 
     try:
-        shap_result = explainer.shap_values(df)
-        if isinstance(shap_result, list):
-            shap_values_row = np.array(shap_result[0])[0]
+        # Try to call shap_values — this will fail if it's a dict
+        shap_values_array = explainer.shap_values(df)
+
+        if isinstance(shap_values_array, list):
+            shap_values_row = np.array(shap_values_array[0])[0]
         else:
-            shap_values_row = np.array(shap_result)[0]
+            shap_values_row = np.array(shap_values_array)[0]
 
         feature_names = list(df.columns)
-        shap_values = {feature_names[i]: float(shap_values_row[i]) for i in range(len(feature_names))}
+        shap_values = {
+            feature_names[i]: float(shap_values_row[i])
+            for i in range(len(feature_names))
+        }
+
         return {"shap_values": shap_values}
+
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"SHAP explain failed: {str(e)}")
+        print(f"SHAP explain failed: {str(e)}")
+        # Return empty dict instead of crashing the whole endpoint
+        return {"shap_values": {}}

@@ -1,18 +1,20 @@
 {
   "best_model": "RandomForest",
-  "best_accuracy": 0.7932,
-  "best_f1_weighted": 0.7934,
-  "rf_accuracy": 0.7932,
-  "rf_f1_weighted": 0.7934,
-  "xgb_accuracy": 0.7454,
-  "xgb_f1_weighted": 0.7483,
+  "best_accuracy": 0.8021,
+  "best_f1_weighted": 0.8021,
+  "rf_accuracy": 0.8021,
+  "rf_f1_weighted": 0.8021,
+  "xgb_accuracy": 0.7323,
+  "xgb_f1_weighted": 0.7365,
   "features": [
     "pm2_5_ugm3",
     "pm10_ugm3",
     "co_ugm3",
-    "o3_ugm3",
     "no2_ugm3",
-    "city_enc"
+    "so2_ugm3",
+    "o3_ugm3",
+    "month",
+    "hour"
   ],
   "target_int": "aqi_category_enc",
   "target_str": "aqi_category",
@@ -36,6 +38,7 @@
     0,
     2,
     3,
-    4
+    4,
+    5
   ]
 }
