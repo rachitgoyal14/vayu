@@ -140,7 +140,7 @@ def fetch_city_data(city: str):
     return {
         "city":        city,
         "datetime":    now.isoformat(),
-        "AQI":         data["aqi"],
+        "AQI":         int(data["aqi"]),
         "pm2_5_ugm3":  data["pm2_5"],
         "pm10_ugm3":   data["pm10"],
         "co_ugm3":     data["co"],
