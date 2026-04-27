@@ -26,11 +26,11 @@ jobs:
           python-version: '3.11'
 
       - name: Install dependencies
-        run: pip install pandas requests python-dotenv supabase
+        run: pip install requests python-dotenv supabase
 
       - name: Fetch and store AQI Data
         env:
-          OPENWEATHER_API_KEY: ${{ secrets.OPENWEATHER_API_KEY }}
+          WAQI_API_KEY: ${{ secrets.WAQI_API_KEY }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
         run: python -m forecaster.fetch_and_store_aqi

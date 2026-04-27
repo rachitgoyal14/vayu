@@ -13,12 +13,25 @@ from fastapi import HTTPException
 from utils import get_lag_features, aqi_to_category, encode_city, supabase
 
 # =========================
+# SAFE UTILITIES
+# =========================
+
+def safe_float(val):
+    try:
+        if val in [None, "-", "", "NA"]:
+            return None
+        return float(val)
+    except:
+        return None
+
+# =========================
 # PATH SETUP
 # =========================
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODELS_DIR = os.path.abspath(os.path.join(BASE_DIR, "../models"))
 OPENWEATHER_API_KEY = os.getenv("OPENWEATHER_API_KEY")
+WAQI_API_KEY = os.getenv("WAQI_API_KEY")
 
 # =========================
 # FEATURES
@@ -330,18 +343,86 @@ def _get_latest_city_row(city: str):
     return response.data[0]
 
 
-def _fetch_live_city_components(city: str):
+def _fetch_waqi(city: str):
+    """Fetch AQI + reverse-engineered pollutant concentrations from WAQI geo endpoint."""
+    if not WAQI_API_KEY:
+        raise HTTPException(status_code=500, detail="WAQI_API_KEY missing")
+
+    city_lower = city.lower().strip()
+    coords = CITY_COORDS.get(city_lower)
+    if not coords:
+        raise HTTPException(status_code=400, detail=f"Unknown city: {city}")
+
+    lat, lon = coords
+    url = f"https://api.waqi.info/feed/geo:{lat};{lon}/?token={WAQI_API_KEY}"
+
+    try:
+        response = requests.get(url, timeout=10)
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"WAQI request failed: {str(e)}")
+
+    if response.status_code != 200:
+        raise HTTPException(status_code=502, detail=response.text)
+
+    data = response.json()
+    if data.get("status") != "ok":
+        raise HTTPException(status_code=502, detail=f"WAQI error: {data}")
+
+    d = data["data"]
+    aqi = safe_float(d.get("aqi"))
+    if aqi is None or aqi <= 0:
+        return {"aqi": None, "pm2_5": 0.0, "pm10": 0.0, "co": 0.0, "no2": 0.0, "so2": 0.0, "o3": 0.0}
+
+    iaqi = d.get("iaqi", {})
+
+    def get_iaqi(key):
+        val = iaqi.get(key, {}).get("v")
+        return safe_float(val)
+
+    def reverse_sub_index(sub_index, pollutant):
+        if sub_index is None:
+            return None
+        for c_low, c_high, i_low, i_high in CPCB_BREAKPOINTS[pollutant]:
+            if i_low <= sub_index <= i_high:
+                return round(((sub_index - i_low) / (i_high - i_low)) * (c_high - c_low) + c_low, 4)
+        return CPCB_BREAKPOINTS[pollutant][-1][1]
+
+    pm25_si = get_iaqi("pm25")
+    pm10_si = get_iaqi("pm10")
+    no2_si  = get_iaqi("no2")
+    so2_si  = get_iaqi("so2")
+    o3_si   = get_iaqi("o3")
+    co_si   = get_iaqi("co")
+
+    pm2_5 = reverse_sub_index(pm25_si, "pm2_5") or 45.0
+    pm10  = reverse_sub_index(pm10_si, "pm10")  or 75.0
+    no2   = reverse_sub_index(no2_si,  "no2")   or 40.0
+    so2   = reverse_sub_index(so2_si,  "so2")   or 20.0
+    o3    = reverse_sub_index(o3_si,   "o3")    or 30.0
+    co_mgm3 = reverse_sub_index(co_si, "co")    or 0.5
+    co_ugm3 = co_mgm3 * 1000
+
+    return {
+        "aqi":   int(min(aqi, 500)),
+        "pm2_5": pm2_5,
+        "pm10":  pm10,
+        "co":    co_ugm3,
+        "no2":   no2,
+        "so2":   so2,
+        "o3":    o3,
+    }
+
+def _fetch_openweather(city: str):
     if not OPENWEATHER_API_KEY:
-        raise HTTPException(status_code=500, detail="OPENWEATHER_API_KEY missing on backend")
+        raise HTTPException(status_code=500, detail="OPENWEATHER_API_KEY missing")
 
-    if city not in CITY_COORDS:
-        raise HTTPException(status_code=400, detail=f"City coordinates not found: {city}")
+    city_lower = city.lower().strip()
+    coords = CITY_COORDS.get(city_lower)
+    if not coords:
+        raise HTTPException(status_code=400, detail=f"Unknown city: {city}")
 
-    lat, lon = CITY_COORDS[city]
-    url = (
-        "https://api.openweathermap.org/data/2.5/air_pollution"
-        f"?lat={lat}&lon={lon}&appid={OPENWEATHER_API_KEY}"
-    )
+    lat, lon = coords
+    url = f"http://api.openweathermap.org/data/2.5/air_pollution?lat={lat}&lon={lon}&appid={OPENWEATHER_API_KEY}"
 
     try:
         response = requests.get(url, timeout=10)
@@ -349,27 +430,29 @@ def _fetch_live_city_components(city: str):
         raise HTTPException(status_code=502, detail=f"OpenWeather request failed: {str(e)}")
 
     if response.status_code != 200:
-        raise HTTPException(
-            status_code=502,
-            detail=f"OpenWeather error {response.status_code}: {response.text}",
-        )
+        raise HTTPException(status_code=502, detail=response.text)
 
-    payload = response.json()
-    items = payload.get("list", [])
-    if not items:
-        raise HTTPException(status_code=502, detail="OpenWeather returned empty pollution list")
+    data = response.json()
 
-    components = items[0].get("components", {})
-    if not components:
-        raise HTTPException(status_code=502, detail="OpenWeather returned no pollutant components")
+    if "list" not in data or len(data["list"]) == 0:
+        raise HTTPException(status_code=502, detail=f"Invalid OpenWeather response: {data}")
+
+    components = data["list"][0].get("components", {})
+
+    pm2_5 = safe_float(components.get("pm2_5")) or 0.0
+    pm10 = safe_float(components.get("pm10")) or 0.0
+    co = safe_float(components.get("co")) or 0.0
+    no2 = safe_float(components.get("no2")) or 0.0
+    so2 = safe_float(components.get("so2")) or 0.0
+    o3 = safe_float(components.get("o3")) or 0.0
 
     return {
-        "pm2_5": float(components.get("pm2_5", 0)),
-        "pm10": float(components.get("pm10", 0)),
-        "co": float(components.get("co", 0)),
-        "no2": float(components.get("no2", 0)),
-        "so2": float(components.get("so2", 0)),
-        "o3": float(components.get("o3", 0)),
+        "pm2_5": pm2_5,
+        "pm10": pm10,
+        "co": co,
+        "no2": no2,
+        "so2": so2,
+        "o3": o3,
     }
 
 
@@ -419,47 +502,91 @@ def forecast_live(data: dict):
 
 @app.post("/predict/forecast/realtime")
 def forecast_realtime(data: dict):
-    city = data.get("city", "").lower().strip()
-    if not city:
-        raise HTTPException(status_code=400, detail="Field 'city' is required")
+    try:
+        city = data.get("city", "").lower().strip()
+        if not city:
+            raise HTTPException(status_code=400, detail="Field 'city' is required")
 
-    latest = _get_latest_city_row(city)
-    live = _fetch_live_city_components(city)
+        print("=== Forecast Realtime Request ===")
+        print(f"City: {city}")
 
-    payload = {
-        "city": city,
-        "pm2_5": live["pm2_5"],
-        "pm10": live["pm10"],
-        "co": live["co"],
-        "no2": live["no2"],
-        "so2": live["so2"],
-        "o3": live["o3"],
-        "hour": latest["hour"],
-        "month": latest["month"],
-        "day_of_week": latest["day_of_week"],
-        "is_weekend": latest["is_weekend"],
-    }
+        print("Fetching latest row from Supabase...")
+        latest = _get_latest_city_row(city)
 
-    forecast_result = forecast(payload)
+        print("Fetching WAQI (AQI + pollutants)...")
+        try:
+            waqi = _fetch_waqi(city)
+        except Exception as e:
+            print(f"WAQI fetch error: {e}")
+            waqi = {"aqi": None, "pm2_5": 0.0, "pm10": 0.0, "co": 0.0, "no2": 0.0, "so2": 0.0, "o3": 0.0}
 
-    return {
-        "city": city,
-        "datetime": latest.get("datetime"),
-        "current": {
-            "pm2_5": live["pm2_5"],
-            "pm10": live["pm10"],
-            "co": live["co"],
-            "no2": live["no2"],
-            "so2": live["so2"],
-            "o3": live["o3"],
-            "hour": latest.get("hour"),
-            "month": latest.get("month"),
-            "day_of_week": latest.get("day_of_week"),
-            "is_weekend": latest.get("is_weekend"),
-        },
-        "forecast": forecast_result["forecast"],
-    }
+        print(f"WAQI response: {waqi}")
 
+        now = datetime.now()
+        current_hour = now.hour
+        current_month = now.month
+        current_day_of_week = now.weekday()
+        current_is_weekend = 1 if now.weekday() in [5, 6] else 0
+
+        pm2_5 = waqi.get("pm2_5") or 0.0
+        pm10  = waqi.get("pm10")  or 0.0
+        co    = waqi.get("co")    or 0.0
+        no2   = waqi.get("no2")   or 0.0
+        so2   = waqi.get("so2")   or 0.0
+        o3    = waqi.get("o3")    or 0.0
+
+        payload = {
+            "city":        city,
+            "pm2_5":       pm2_5,
+            "pm10":        pm10,
+            "co":          co,
+            "no2":         no2,
+            "so2":         so2,
+            "o3":          o3,
+            "hour":        current_hour,
+            "month":       current_month,
+            "day_of_week": current_day_of_week,
+            "is_weekend":  current_is_weekend,
+        }
+
+        print(f"Payload: {payload}")
+        forecast_result = forecast(payload)
+        print(f"Forecast result: {forecast_result}")
+
+        current_aqi = waqi.get("aqi")
+        if current_aqi is None:
+            try:
+                lag1, _, _ = get_lag_features(city)
+                current_aqi = int(lag1)
+            except:
+                current_aqi = 100
+
+        return {
+            "city":        city,
+            "datetime":    now.isoformat(),
+            "current_aqi": current_aqi,
+            "current": {
+                "pm2_5":        pm2_5,
+                "pm10":         pm10,
+                "co":           co,
+                "no2":          no2,
+                "so2":          so2,
+                "o3":           o3,
+                "hour":         current_hour,
+                "month":        current_month,
+                "day_of_week":  current_day_of_week,
+                "is_weekend":   current_is_weekend,
+            },
+            "forecast": forecast_result["forecast"],
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"ERROR in forecast_realtime: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 # =========================
 # CLASSIFIER

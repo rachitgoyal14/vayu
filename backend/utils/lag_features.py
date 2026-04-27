@@ -25,9 +25,12 @@ def get_lag_features(city: str):
         if len(df) == 0:
             raise ValueError("Empty dataframe")
 
-        lag_1 = df["AQI"].iloc[-1]
-        lag_6 = df["AQI"].iloc[-6] if len(df) >= 6 else lag_1
-        lag_24 = df["AQI"].iloc[-24] if len(df) >= 24 else lag_1
+        aqi_series = df["AQI"].clip(upper=300)
+        aqi_series = aqi_series.clip(lower=0)
+
+        lag_1 = aqi_series.iloc[-1]
+        lag_6 = aqi_series.iloc[-6] if len(df) >= 6 else lag_1
+        lag_24 = aqi_series.iloc[-24] if len(df) >= 24 else lag_1
 
         return lag_1, lag_6, lag_24
 

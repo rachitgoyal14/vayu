@@ -19,11 +19,21 @@ function getDominantShapPollutant(shapData: SHAPResult | null): string {
     return "PM2.5";
   }
 
-  const [topFeature] = Object.entries(shapData.shap_values).sort(
-    (a, b) => Math.abs(b[1]) - Math.abs(a[1]),
-  );
+  const pollutantFeatureMap: Record<string, string> = {
+    pm2_5_ugm3: "PM2.5",
+    pm10_ugm3: "PM10",
+    co_ugm3: "CO",
+    no2_ugm3: "NO2",
+    so2_ugm3: "SO2",
+    o3_ugm3: "O3",
+  };
 
-  return topFeature?.[0]?.replaceAll("_ugm3", "").replaceAll("_", ".").toUpperCase() ?? "PM2.5";
+  const [topPollutant] = Object.entries(shapData.shap_values)
+    .filter(([feature]) => feature in pollutantFeatureMap)
+    .sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]));
+
+  if (!topPollutant) return "PM2.5";
+  return pollutantFeatureMap[topPollutant[0]] ?? "PM2.5";
 }
 
 function inferPrimarySourceFromPollutant(pollutant: string, fallback: string): string {

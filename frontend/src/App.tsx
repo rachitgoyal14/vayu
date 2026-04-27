@@ -26,6 +26,7 @@ const EMPTY_TREND = Array.from({ length: 24 }).map((_, i) => ({
 }));
 const HISTORY_CACHE_KEY = "vayu:aqi-history-24h";
 const CITY_REFRESH_INTERVAL_MS = 5 * 60 * 1000;
+const SHAP_REFRESH_INTERVAL_MS = 10 * 60 * 1000;
 
 function buildTrend(currentAQI: number, forecast: CityAQIData["forecast"]["forecast"]) {
   const anchors = [
@@ -109,6 +110,7 @@ export default function App() {
   );
   const cityCacheRef = useRef<Record<string, CityAQIData>>({});
   const cityAQIRef = useRef<CityAQIData | null>(null);
+  const shapCacheRef = useRef<Record<string, { data: SHAPResult; fetchedAt: number }>>({});
 
   useEffect(() => {
     cityCacheRef.current = cityCache;
@@ -211,12 +213,20 @@ export default function App() {
 
       try {
         const nextCityData = await fetchCityAQI(selectedCity);
-        const shapResult = await fetchSHAP(selectedCity.id, nextCityData.pollutants);
+        const cachedShap = shapCacheRef.current[selectedCity.id];
+        const isShapFresh =
+          cachedShap &&
+          Date.now() - cachedShap.fetchedAt < SHAP_REFRESH_INTERVAL_MS &&
+          Object.keys(cachedShap.data.shap_values || {}).length > 0;
+        const shapResult = isShapFresh
+          ? cachedShap.data
+          : await fetchSHAP(selectedCity.id, nextCityData.pollutants);
         if (!isMounted) return;
 
         setCityAQI(nextCityData);
         setCityCache((prev) => ({ ...prev, [selectedCity.id]: nextCityData }));
         setShapData(shapResult);
+        shapCacheRef.current[selectedCity.id] = { data: shapResult, fetchedAt: Date.now() };
       } catch (error) {
         if (!isMounted) return;
         const message = error instanceof Error ? error.message : "Unable to fetch live AQI data.";
