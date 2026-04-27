@@ -344,7 +344,6 @@ def _get_latest_city_row(city: str):
 
 
 def _fetch_waqi(city: str):
-    """Fetch AQI + reverse-engineered pollutant concentrations from WAQI geo endpoint."""
     if not WAQI_API_KEY:
         raise HTTPException(status_code=500, detail="WAQI_API_KEY missing")
 
@@ -353,27 +352,53 @@ def _fetch_waqi(city: str):
     if not coords:
         raise HTTPException(status_code=400, detail=f"Unknown city: {city}")
 
-    lat, lon = coords
-    url = f"https://api.waqi.info/feed/geo:{lat};{lon}/?token={WAQI_API_KEY}"
-
+    # Step 1: search endpoint for multiple stations → median AQI
+    search_url = f"https://api.waqi.info/search/?token={WAQI_API_KEY}&keyword={city_lower}"
     try:
-        response = requests.get(url, timeout=10)
+        search_resp = requests.get(search_url, timeout=10)
     except Exception as e:
-        raise HTTPException(status_code=502, detail=f"WAQI request failed: {str(e)}")
+        raise HTTPException(status_code=502, detail=f"WAQI search failed: {str(e)}")
 
-    if response.status_code != 200:
-        raise HTTPException(status_code=502, detail=response.text)
+    if search_resp.status_code != 200:
+        raise HTTPException(status_code=502, detail=search_resp.text)
 
-    data = response.json()
-    if data.get("status") != "ok":
-        raise HTTPException(status_code=502, detail=f"WAQI error: {data}")
+    search_data = search_resp.json()
+    aqi_values = []
 
-    d = data["data"]
-    aqi = safe_float(d.get("aqi"))
-    if aqi is None or aqi <= 0:
-        return {"aqi": None, "pm2_5": 0.0, "pm10": 0.0, "co": 0.0, "no2": 0.0, "so2": 0.0, "o3": 0.0}
+    if search_data.get("status") == "ok":
+        for station in search_data.get("data", []):
+            aqi = safe_float(station.get("aqi"))
+            if aqi is not None and 0 < aqi <= 500:
+                aqi_values.append(aqi)
 
-    iaqi = d.get("iaqi", {})
+    # Step 2: geo endpoint for pollutant sub-indices
+    lat, lon = coords
+    geo_url = f"https://api.waqi.info/feed/geo:{lat};{lon}/?token={WAQI_API_KEY}"
+    try:
+        geo_resp = requests.get(geo_url, timeout=10)
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"WAQI geo failed: {str(e)}")
+
+    if geo_resp.status_code != 200:
+        raise HTTPException(status_code=502, detail=geo_resp.text)
+
+    geo_data = geo_resp.json()
+    if geo_data.get("status") != "ok":
+        raise HTTPException(status_code=502, detail=f"WAQI geo error: {geo_data}")
+
+    # If search gave us AQIs use median, else fall back to geo AQI
+    if aqi_values:
+        from statistics import median
+        final_aqi = int(median(aqi_values))
+    else:
+        geo_aqi = safe_float(geo_data["data"].get("aqi"))
+        if geo_aqi is None or geo_aqi <= 0:
+            return {"aqi": None, "pm2_5": 0.0, "pm10": 0.0, "co": 0.0, "no2": 0.0, "so2": 0.0, "o3": 0.0}
+        final_aqi = int(geo_aqi)
+
+    print(f"[{city}] Station AQIs: {sorted(aqi_values)} → Median: {final_aqi}")
+
+    iaqi = geo_data["data"].get("iaqi", {})
 
     def get_iaqi(key):
         val = iaqi.get(key, {}).get("v")
@@ -387,23 +412,16 @@ def _fetch_waqi(city: str):
                 return round(((sub_index - i_low) / (i_high - i_low)) * (c_high - c_low) + c_low, 4)
         return CPCB_BREAKPOINTS[pollutant][-1][1]
 
-    pm25_si = get_iaqi("pm25")
-    pm10_si = get_iaqi("pm10")
-    no2_si  = get_iaqi("no2")
-    so2_si  = get_iaqi("so2")
-    o3_si   = get_iaqi("o3")
-    co_si   = get_iaqi("co")
-
-    pm2_5 = reverse_sub_index(pm25_si, "pm2_5") or 45.0
-    pm10  = reverse_sub_index(pm10_si, "pm10")  or 75.0
-    no2   = reverse_sub_index(no2_si,  "no2")   or 40.0
-    so2   = reverse_sub_index(so2_si,  "so2")   or 20.0
-    o3    = reverse_sub_index(o3_si,   "o3")    or 30.0
-    co_mgm3 = reverse_sub_index(co_si, "co")    or 0.5
+    pm2_5   = reverse_sub_index(get_iaqi("pm25"), "pm2_5") or 45.0
+    pm10    = reverse_sub_index(get_iaqi("pm10"), "pm10")  or 75.0
+    no2     = reverse_sub_index(get_iaqi("no2"),  "no2")   or 40.0
+    so2     = reverse_sub_index(get_iaqi("so2"),  "so2")   or 20.0
+    o3      = reverse_sub_index(get_iaqi("o3"),   "o3")    or 30.0
+    co_mgm3 = reverse_sub_index(get_iaqi("co"),   "co")    or 0.5
     co_ugm3 = co_mgm3 * 1000
 
     return {
-        "aqi":   int(min(aqi, 500)),
+        "aqi":   final_aqi,
         "pm2_5": pm2_5,
         "pm10":  pm10,
         "co":    co_ugm3,
