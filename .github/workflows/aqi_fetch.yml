@@ -33,4 +33,4 @@ jobs:
           WAQI_API_KEY: ${{ secrets.WAQI_API_KEY }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
-        run: python -m forecaster.fetch_and_store_aqi
+        run: python -m pipelines.fetch_and_store_aqi

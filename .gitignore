@@ -13,3 +13,5 @@ rf_classifier.pkl
 best_classifier.pkl
 
 context.md
+__pycache__/
+repo_structure.txt
