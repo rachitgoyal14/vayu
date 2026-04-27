@@ -10,5 +10,5 @@ except Exception:
 new = pd.read_csv("/tmp/hourlyData_new.csv")
 df = pd.concat([old, new]).drop_duplicates(subset=["city", "datetime"])
 df = df.sort_values(["city", "datetime"]).reset_index(drop=True)
-df.to_csv("forecaster/hourlyData.csv", index=False)
+df.to_csv("pipelines/hourlyData.csv", index=False)
 print(f"Total rows after merge: {len(df)}")
