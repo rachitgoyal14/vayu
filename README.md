@@ -5,7 +5,6 @@
 <h1 align="center">Vayu - Air Quality Intelligence System</h1>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Python-3.11+-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python" />
   <img src="https://img.shields.io/badge/FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white" alt="FastAPI" />
   <img src="https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react&logoColor=black" alt="React" />
   <img src="https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" />
@@ -14,8 +13,7 @@
   <img src="https://img.shields.io/badge/Supabase-3ECF8E?style=flat-square&logo=supabase&logoColor=white" alt="Supabase" />
   <img src="https://img.shields.io/badge/GitHub_Actions-Hourly_Pipeline-2088FF?style=flat-square&logo=githubactions&logoColor=white" alt="GitHub Actions" />
   <img src="https://img.shields.io/badge/HuggingFace-Models-FFD21E?style=flat-square&logo=huggingface&logoColor=black" alt="HuggingFace" />
-  <img src="https://img.shields.io/badge/Cities-29_Indian-FF9933?style=flat-square" alt="29 Cities" />
-  <img src="https://img.shields.io/badge/License-MIT-22c55e?style=flat-square" alt="MIT License" />
+  
 </p>
 
 A production-grade, end-to-end air quality forecasting system for 29 Indian cities. Vayu combines a live data pipeline, XGBoost-based ML models, SHAP explainability, and NMF source attribution into a FastAPI backend and React dashboard.
