@@ -410,8 +410,14 @@ Agartala, Ahmedabad, Aizawl, Bengaluru, Bhopal, Bhubaneswar, Chandigarh, Chennai
 
 ## Deployment
 
-Coming soon.
+### Frontend
+🔗 [vayu.rachitgoyal.in](https://vayu.rachitgoyal.in)
 
+### Backend
+🔗 [vayu-6ss8.onrender.com](https://vayu-6ss8.onrender.com)
+
+### Models
+🔗 [huggingface.co/rachitgoyell/vayu-models](http://huggingface.co/rachitgoyell/vayu-models/)
 ---
 
 ## License
