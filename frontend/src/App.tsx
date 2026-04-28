@@ -385,6 +385,12 @@ export default function App() {
   // Show AQICard skeleton only when truly loading with no cached data
   const showCardSkeleton = isLoading && cityAQI === null;
 
+  // Show PollutantAnalysis skeleton when loading with no SHAP data yet
+  const showAnalysisSkeleton = isLoading && shapData === null;
+
+  // Show TrendChart skeleton when loading and trend is flat/empty (no real data yet)
+  const showTrendSkeleton = isLoading && cityAQI === null;
+
   return (
     <div className="min-h-screen bg-[#0A0606] text-slate-100 selection:bg-red-600 selection:text-white">
       <Atmosphere category={aqiData.category} />
@@ -441,6 +447,7 @@ export default function App() {
             category={aqiData.category}
             source={aqiData.source}
             shapData={shapData}
+            isLoading={showAnalysisSkeleton}
           />
           <AnimatePresence>
             {isLoading && !showCardSkeleton && (
@@ -491,6 +498,7 @@ export default function App() {
           <TrendChart
             category={aqiData.category}
             data={aqiData.trend}
+            isLoading={showTrendSkeleton}
             statusLabel={
               predictionOffline
                 ? "Prediction Engine Offline"
