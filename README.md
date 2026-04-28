@@ -418,6 +418,7 @@ Agartala, Ahmedabad, Aizawl, Bengaluru, Bhopal, Bhubaneswar, Chandigarh, Chennai
 
 ### Models
 🔗 [huggingface.co/rachitgoyell/vayu-models](http://huggingface.co/rachitgoyell/vayu-models/)
+
 ---
 
 ## License
