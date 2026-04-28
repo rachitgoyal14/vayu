@@ -4,7 +4,7 @@
  */
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import Atmosphere from "./components/Atmosphere";
 import Navbar from "./components/Navbar";
 import AQICard from "./components/AQICard";
@@ -38,25 +38,18 @@ const POLLUTANT_LABELS: Record<string, string> = {
   co_ugm3:    "CO",
 };
 
-// Diurnal multipliers per hour (0–23) reflecting real Indian urban AQI patterns:
-// low in early morning (4–5 am), peak morning rush (9–10 am), slight dip afternoon,
-// peak evening rush (7–9 pm), gradual nighttime rise from residential burning.
+// Diurnal multipliers per hour (0–23)
 const DIURNAL: number[] = [
-  1.05, 1.02, 0.98, 0.94, 0.90, 0.88, // 00–05 gradual dip toward dawn
-  0.92, 1.00, 1.10, 1.18, 1.15, 1.08, // 06–11 morning rush + stabilise
-  1.02, 0.98, 0.95, 0.93, 0.94, 0.97, // 12–17 afternoon lull
-  1.05, 1.14, 1.18, 1.12, 1.08, 1.06, // 18–23 evening rush + night haze
+  1.05, 1.02, 0.98, 0.94, 0.90, 0.88,
+  0.92, 1.00, 1.10, 1.18, 1.15, 1.08,
+  1.02, 0.98, 0.95, 0.93, 0.94, 0.97,
+  1.05, 1.14, 1.18, 1.12, 1.08, 1.06,
 ];
 
-/**
- * Apply a realistic diurnal variation to an otherwise flat trend series.
- * Keeps the mean equal to the baseline AQI while adding ±~15% swing.
- */
 function applyDiurnal(
   points: { time: string; value: number }[],
   baseAQI: number,
 ): { time: string; value: number }[] {
-  // If we already have real variation (std-dev > 5), trust the data as-is
   if (points.length > 0) {
     const mean = points.reduce((s, p) => s + p.value, 0) / points.length;
     const stdDev = Math.sqrt(
@@ -64,16 +57,11 @@ function applyDiurnal(
     );
     if (stdDev > 5) return points;
   }
-
-  return points.map((p, i) => {
+  return points.map((p) => {
     const hour = parseInt(p.time.split(":")[0], 10);
     const multiplier = DIURNAL[hour] ?? 1.0;
-    // Use the point's own value if it looks real, else use baseAQI
     const base = p.value > 0 ? p.value : baseAQI;
-    return {
-      time: p.time,
-      value: Math.max(1, Math.round(base * multiplier)),
-    };
+    return { time: p.time, value: Math.max(1, Math.round(base * multiplier)) };
   });
 }
 
@@ -84,18 +72,15 @@ function buildTrend(currentAQI: number, forecast: CityAQIData["forecast"]["forec
     { hour: 12, value: forecast["12h"].aqi },
     { hour: 24, value: forecast["24h"].aqi },
   ];
-
   return Array.from({ length: 24 }).map((_, hour) => {
     const rightAnchor = anchors.find((anchor) => anchor.hour >= hour) ?? anchors[anchors.length - 1];
     const rightIndex = anchors.indexOf(rightAnchor);
     const leftAnchor = rightIndex > 0 ? anchors[rightIndex - 1] : anchors[0];
     const span = Math.max(1, rightAnchor.hour - leftAnchor.hour);
     const progress = (hour - leftAnchor.hour) / span;
-    const value = leftAnchor.value + (rightAnchor.value - leftAnchor.value) * progress;
-
     return {
       time: `${hour.toString().padStart(2, "0")}:00`,
-      value: Math.round(value),
+      value: Math.round(leftAnchor.value + (rightAnchor.value - leftAnchor.value) * progress),
     };
   });
 }
@@ -103,13 +88,11 @@ function buildTrend(currentAQI: number, forecast: CityAQIData["forecast"]["forec
 function normalizeTrendTo24(points: TrendPoint[] | undefined, fallbackValue: number): TrendPoint[] {
   const now = new Date();
   now.setMinutes(0, 0, 0);
-
   const slots = Array.from({ length: 24 }).map((_, i) => {
     const dt = new Date(now);
     dt.setHours(now.getHours() - (23 - i));
     return dt;
   });
-
   const known = (points ?? [])
     .map((p) => {
       if (!p.datetime) return null;
@@ -120,15 +103,12 @@ function normalizeTrendTo24(points: TrendPoint[] | undefined, fallbackValue: num
     })
     .filter((v): v is { ts: number; value: number } => v !== null)
     .sort((a, b) => a.ts - b.ts);
-
   const valuesBySlot = slots.map((slot) => {
     const ts = slot.getTime();
     const exact = known.find((k) => k.ts === ts);
     if (exact) return exact.value;
-
     const left = [...known].reverse().find((k) => k.ts < ts);
     const right = known.find((k) => k.ts > ts);
-
     if (left && right) {
       const ratio = (ts - left.ts) / (right.ts - left.ts);
       return left.value + (right.value - left.value) * ratio;
@@ -137,14 +117,12 @@ function normalizeTrendTo24(points: TrendPoint[] | undefined, fallbackValue: num
     if (right) return right.value;
     return fallbackValue;
   });
-
   return slots.map((slot, i) => ({
     time: `${slot.getHours().toString().padStart(2, "0")}:00`,
     value: Math.round(valuesBySlot[i]),
   }));
 }
 
-/** Derive dominant pollutant label from SHAP values (ignores non-pollutant features) */
 function getDominantPollutant(shap: SHAPResult | null): string | null {
   if (!shap || Object.keys(shap.shap_values).length === 0) return null;
   const pollutantKeys = Object.keys(POLLUTANT_LABELS);
@@ -158,6 +136,85 @@ function getDominantPollutant(shap: SHAPResult | null): string | null {
     }
   }
   return topKey ? (POLLUTANT_LABELS[topKey] ?? null) : null;
+}
+
+/* ─── Satirical Render Banner ──────────────────────────────────────────── */
+const RENDER_EXCUSES = [
+  "Prediction engine napping on Render's free tier.",
+  "Backend cold-starting. Estimated time: eventually.",
+  "Server was asleep. Still is. Politely waking it up.",
+  "Free dyno spinning up. Dreams of $7/month persist.",
+  "Sending request into the void. Void is slow today.",
+  "Backend technically alive. Spiritually uncertain.",
+  "Container last seen 15 minutes ago. Search ongoing.",
+];
+
+function PredictionOfflineBanner() {
+  const [excuseIdx, setExcuseIdx] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => setExcuseIdx((i) => (i + 1) % RENDER_EXCUSES.length), 4000);
+    return () => clearInterval(t);
+  }, []);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -8 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -8 }}
+      className="fixed top-20 left-0 right-0 z-[90] px-8"
+    >
+      <div className="mx-auto max-w-[1600px] rounded-2xl border border-amber-500/20 bg-amber-500/5 backdrop-blur-xl px-5 py-2.5 flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          {/* Spinning gear icon */}
+          <motion.svg
+            className="w-3.5 h-3.5 text-amber-500 flex-shrink-0"
+            animate={{ rotate: [0, 360] }}
+            transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+            fill="none" stroke="currentColor" viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+              d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          </motion.svg>
+          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-400">
+            Render Free Tier
+          </span>
+          <span className="w-px h-3 bg-amber-500/20" />
+          <AnimatePresence mode="wait">
+            <motion.span
+              key={excuseIdx}
+              initial={{ opacity: 0, x: 6, filter: "blur(4px)" }}
+              animate={{ opacity: 1, x: 0, filter: "blur(0px)" }}
+              exit={{ opacity: 0, x: -6, filter: "blur(4px)" }}
+              transition={{ duration: 0.3 }}
+              className="text-[10px] font-bold text-amber-500/70 tracking-wide"
+            >
+              {RENDER_EXCUSES[excuseIdx]}
+            </motion.span>
+          </AnimatePresence>
+        </div>
+        <div className="flex items-center gap-3 flex-shrink-0">
+          <span className="text-[9px] font-black uppercase tracking-widest text-amber-500/40">
+            Showing cached data
+          </span>
+          <span className="w-px h-3 bg-amber-500/20" />
+          <a
+            href="https://vayu-6ss8.onrender.com/health"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-amber-500/50 hover:text-amber-400 transition-colors duration-200"
+          >
+            <motion.span
+              animate={{ opacity: [0.4, 1, 0.4] }}
+              transition={{ duration: 2, repeat: Infinity }}
+              className="w-1.5 h-1.5 rounded-full bg-amber-500/50 group-hover:bg-amber-400 flex-shrink-0"
+            />
+            Check Backend Status ↗
+          </a>
+        </div>
+      </div>
+    </motion.div>
+  );
 }
 
 export default function App() {
@@ -177,28 +234,17 @@ export default function App() {
   const cityAQIRef = useRef<CityAQIData | null>(null);
   const shapCacheRef = useRef<Record<string, { data: SHAPResult; fetchedAt: number }>>({});
 
-  useEffect(() => {
-    cityCacheRef.current = cityCache;
-  }, [cityCache]);
-
-  useEffect(() => {
-    cityAQIRef.current = cityAQI;
-  }, [cityAQI]);
+  useEffect(() => { cityCacheRef.current = cityCache; }, [cityCache]);
+  useEffect(() => { cityAQIRef.current = cityAQI; }, [cityAQI]);
 
   useEffect(() => {
     const fromStorage = localStorage.getItem(HISTORY_CACHE_KEY);
     if (fromStorage) {
       try {
         const parsed = JSON.parse(fromStorage) as CitiesHistory24hResult;
-        if (parsed?.cities) {
-          setHistoryCache(parsed.cities);
-          return;
-        }
-      } catch {
-        // ignore invalid cache and refetch below
-      }
+        if (parsed?.cities) { setHistoryCache(parsed.cities); return; }
+      } catch { /* ignore */ }
     }
-
     const loadHistory = async () => {
       try {
         const allHistory = await fetchAllCities24hHistory();
@@ -208,7 +254,6 @@ export default function App() {
         console.warn("24h history preload failed:", error);
       }
     };
-
     void loadHistory();
   }, []);
 
@@ -218,15 +263,12 @@ export default function App() {
 
   useEffect(() => {
     let isMounted = true;
-
     const refreshForecastForSelection = async () => {
       const currentCityAQI = cityAQIRef.current;
       if (!currentCityAQI) return;
-
       try {
         const realtime = await fetchRealtimeForecast(selectedCity.id);
         if (!isMounted) return;
-
         setPredictionOffline(false);
         setCityAQI((prev) => {
           if (!prev) return prev;
@@ -247,7 +289,6 @@ export default function App() {
             ...prev,
             pollutants: nextPollutants,
             forecast: { city: realtime.city, forecast: realtime.forecast },
-            // Preserve the authoritative WAQI current_aqi if available
             current_aqi: (realtime as { current_aqi?: number }).current_aqi ?? prev.current_aqi,
           };
           setCityCache((cache) => ({ ...cache, [selectedCity.id]: next }));
@@ -259,23 +300,17 @@ export default function App() {
         setErrorMessage("Prediction engine offline");
       }
     };
-
     void refreshForecastForSelection();
-
-    return () => {
-      isMounted = false;
-    };
+    return () => { isMounted = false; };
   }, [predictionType, selectedCity.id]);
 
   useEffect(() => {
     let isMounted = true;
-
     const loadCityData = async () => {
       setIsLoading(true);
       setErrorMessage(null);
       setSensorOffline(false);
       setPredictionOffline(false);
-
       try {
         const nextCityData = await fetchCityAQI(selectedCity);
         const cachedShap = shapCacheRef.current[selectedCity.id];
@@ -287,7 +322,6 @@ export default function App() {
           ? cachedShap.data
           : await fetchSHAP(selectedCity.id, nextCityData.pollutants);
         if (!isMounted) return;
-
         setCityAQI(nextCityData);
         setCityCache((prev) => ({ ...prev, [selectedCity.id]: nextCityData }));
         setShapData(shapResult);
@@ -296,74 +330,47 @@ export default function App() {
         if (!isMounted) return;
         const message = error instanceof Error ? error.message : "Unable to fetch live AQI data.";
         setErrorMessage(message);
-        if (error instanceof ApiError && error.source === "backend") {
-          setPredictionOffline(true);
-        }
-        if (error instanceof ApiError && error.source === "openweather") {
-          setSensorOffline(true);
-        }
+        if (error instanceof ApiError && error.source === "backend") setPredictionOffline(true);
+        if (error instanceof ApiError && error.source === "openweather") setSensorOffline(true);
         const cached = cityCacheRef.current[selectedCity.id] ?? null;
-        if (cached) {
-          setCityAQI(cached);
-        }
+        if (cached) setCityAQI(cached);
       } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
+        if (isMounted) setIsLoading(false);
       }
     };
-
     void loadCityData();
-    const timer = window.setInterval(() => {
-      void loadCityData();
-    }, CITY_REFRESH_INTERVAL_MS);
-
-    return () => {
-      isMounted = false;
-      window.clearInterval(timer);
-    };
+    const timer = window.setInterval(() => { void loadCityData(); }, CITY_REFRESH_INTERVAL_MS);
+    return () => { isMounted = false; window.clearInterval(timer); };
   }, [selectedCity]);
 
   const aqiData = useMemo(() => {
     const fallbackAQI = 100;
     const forecast = cityAQI?.forecast.forecast;
     const currentAQI = cityAQI?.current_aqi ?? fallbackAQI;
-
     const fallbackCategory = getCategory(currentAQI);
     const forecastData = forecast ?? {
       "6h":  { aqi: currentAQI, category: fallbackCategory, color: getAQIColor(fallbackCategory) },
       "12h": { aqi: currentAQI, category: fallbackCategory, color: getAQIColor(fallbackCategory) },
       "24h": { aqi: currentAQI, category: fallbackCategory, color: getAQIColor(fallbackCategory) },
     };
-
     const activeBackendCategory = forecastData[predictionType]?.category;
     const mappedCategory = activeBackendCategory
       ? mapBackendCategory(activeBackendCategory)
       : getCategory(currentAQI);
-
     const trendFromCache = historyCache[selectedCity.id];
-
-    // Build base trend from Supabase history or forecast fallback
     const rawTrend = normalizeTrendTo24(
       trendFromCache && trendFromCache.length > 0
         ? trendFromCache
-        : forecast
-          ? buildTrend(currentAQI, forecast)
-          : EMPTY_TREND,
+        : forecast ? buildTrend(currentAQI, forecast) : EMPTY_TREND,
       currentAQI,
     );
-
-    // Apply diurnal pattern — adds realistic variation when data is flat
     const trend = applyDiurnal(rawTrend, currentAQI);
-
-    // Dominant pollutant from SHAP values
     const dominantPollutant = getDominantPollutant(shapData);
     const source = dominantPollutant
       ? `${dominantPollutant} Dominant · ${mappedCategory} Pattern`
       : cityAQI?.classification.predicted_category
         ? `${mappedCategory} Atmospheric Pattern`
         : "Live Sensor Fusion";
-
     return {
       aqi: Math.round(currentAQI),
       category: mappedCategory,
@@ -375,18 +382,17 @@ export default function App() {
     };
   }, [cityAQI, historyCache, predictionType, selectedCity.id, shapData]);
 
+  // Show AQICard skeleton only when truly loading with no cached data
+  const showCardSkeleton = isLoading && cityAQI === null;
+
   return (
     <div className="min-h-screen bg-[#0A0606] text-slate-100 selection:bg-red-600 selection:text-white">
       <Atmosphere category={aqiData.category} />
-
       <Navbar onCitySelect={setSelectedCity} selectedCity={selectedCity} />
-      {predictionOffline && (
-        <div className="fixed top-20 left-0 right-0 z-[90] px-8">
-          <div className="mx-auto max-w-[1600px] rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-2 text-[10px] font-black uppercase tracking-[0.2em] text-amber-400">
-            Prediction engine offline
-          </div>
-        </div>
-      )}
+
+      <AnimatePresence>
+        {predictionOffline && <PredictionOfflineBanner key="offline-banner" />}
+      </AnimatePresence>
 
       <main className="max-w-[1600px] mx-auto px-8 pt-24 pb-20 space-y-24">
         {/* Hero: 3:2 split */}
@@ -405,6 +411,7 @@ export default function App() {
               forecast={aqiData.forecast}
               predictionType={predictionType}
               onPredictionChange={setPredictionType}
+              isLoading={showCardSkeleton}
             />
           </motion.div>
           <motion.div
@@ -435,21 +442,41 @@ export default function App() {
             source={aqiData.source}
             shapData={shapData}
           />
-          {isLoading && (
-            <p className="text-[10px] uppercase tracking-[0.2em] text-slate-500">
-              Syncing live city sensors...
-            </p>
-          )}
-          {errorMessage && (
-            <p className="text-[10px] uppercase tracking-[0.2em] text-amber-500/80">
-              Live API degraded. Showing last stable visualization state.
-            </p>
-          )}
-          {sensorOffline && (
-            <p className="text-[10px] uppercase tracking-[0.2em] text-slate-500">
-              Sensor offline. Using last known city data.
-            </p>
-          )}
+          <AnimatePresence>
+            {isLoading && !showCardSkeleton && (
+              <motion.p
+                key="sync-msg"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="text-[10px] uppercase tracking-[0.2em] text-slate-500"
+              >
+                Syncing live city sensors...
+              </motion.p>
+            )}
+            {errorMessage && !predictionOffline && (
+              <motion.p
+                key="error-msg"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="text-[10px] uppercase tracking-[0.2em] text-amber-500/80"
+              >
+                Live API degraded. Showing last stable visualization state.
+              </motion.p>
+            )}
+            {sensorOffline && (
+              <motion.p
+                key="sensor-msg"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="text-[10px] uppercase tracking-[0.2em] text-slate-500"
+              >
+                Sensor offline. Using last known city data.
+              </motion.p>
+            )}
+          </AnimatePresence>
         </section>
 
         {/* Trend */}

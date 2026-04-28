@@ -1,4 +1,5 @@
 import os
+import time
 import joblib
 import numpy as np
 import pandas as pd
@@ -6,11 +7,23 @@ import requests
 from datetime import datetime, timedelta
 
 from fastapi import FastAPI
+from fastapi.responses import HTMLResponse
 from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import HTTPException
+from starlette.middleware.base import BaseHTTPMiddleware
 
 from utils import get_lag_features, aqi_to_category, encode_city, supabase
+from logger import (
+    log, log_startup, log_model_load, log_models_ready,
+    log_request, log_supabase, log_waqi, log_openweather,
+    log_prediction, log_classify, log_shap, log_error,
+    log_health, log_history_query, make_logging_middleware,
+    install_stdlib_bridge, Timer
+)
+
+# ─── Stdlib logging bridge (captures uvicorn / third-party) ──────────────────
+install_stdlib_bridge()
 
 # =========================
 # SAFE UTILITIES
@@ -56,7 +69,7 @@ FORECAST_FEATURES = [
 
 CLF_FEATURES = [
     'pm2_5_ugm3', 'pm10_ugm3', 'co_ugm3', 'no2_ugm3',
-    'so2_ugm3', 'o3_ugm3', 'month', 'hour'   
+    'so2_ugm3', 'o3_ugm3', 'month', 'hour'
 ]
 
 LOG_COLS = ['pm2_5_ugm3', 'pm10_ugm3', 'co_ugm3', 'o3_ugm3', 'no2_ugm3']
@@ -110,18 +123,24 @@ CITY_COORDS = {
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    log_startup()
 
-    models['xgb_6h'] = joblib.load(os.path.join(MODELS_DIR, 'xgb_6h.pkl'))
-    models['xgb_12h'] = joblib.load(os.path.join(MODELS_DIR, 'xgb_12h.pkl'))
-    models['xgb_24h'] = joblib.load(os.path.join(MODELS_DIR, 'xgb_24h.pkl'))
+    model_specs = [
+        ('xgb_6h',       'xgb_6h.pkl'),
+        ('xgb_12h',      'xgb_12h.pkl'),
+        ('xgb_24h',      'xgb_24h.pkl'),
+        ('classifier',   'xgb_classifier.pkl'),
+        ('explainer_6h', 'shap_explainer_6h.pkl'),
+        ('city_encoder', 'city_encoder.pkl'),
+    ]
 
-    models['classifier'] = joblib.load(os.path.join(MODELS_DIR, 'best_classifier.pkl'))
+    for key, filename in model_specs:
+        path = os.path.join(MODELS_DIR, filename)
+        with Timer() as t:
+            models[key] = joblib.load(path)
+        log_model_load(key, path, elapsed_ms=t.ms)
 
-    models['explainer_6h'] = joblib.load(os.path.join(MODELS_DIR, 'shap_explainer_6h.pkl'))
-
-    models['city_encoder'] = joblib.load(os.path.join(MODELS_DIR, 'city_encoder.pkl'))
-
-    print("----------------------------------------------- MODELS LOADED ---------------------------------------------------")
+    log_models_ready([k for k, _ in model_specs])
     yield
 
 
@@ -139,34 +158,110 @@ app.add_middleware(
 )
 
 # =========================
+# REQUEST LOGGING MIDDLEWARE
+# =========================
+
+app.add_middleware(BaseHTTPMiddleware, dispatch=make_logging_middleware())
+
+# =========================
 # ROUTES
 # =========================
 
 @app.get("/health")
-def health():
-    return {"status": "ok"}
+async def health():
+    log_health()  # your existing log function
+    
+    html_content = """
+    <!DOCTYPE html>
+    <html>
+        <head>
+            <title>VAYU Backend</title>
+            <style>
+                body {
+                    font-family: 'Segoe UI', Arial, sans-serif;
+                    background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+                    color: white;
+                    height: 100vh;
+                    margin: 0;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    text-align: center;
+                }
+                .container {
+                    background: rgba(255, 255, 255, 0.1);
+                    backdrop-filter: blur(10px);
+                    padding: 3rem 4rem;
+                    border-radius: 20px;
+                    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+                    border: 1px solid rgba(255, 255, 255, 0.2);
+                }
+                h1 {
+                    font-size: 3.5rem;
+                    margin-bottom: 1rem;
+                    font-weight: 700;
+                }
+                p {
+                    font-size: 1.4rem;
+                    opacity: 0.95;
+                    margin-bottom: 2rem;
+                }
+                .status {
+                    display: inline-block;
+                    background: #22c55e;
+                    color: #052e16;
+                    padding: 8px 20px;
+                    border-radius: 50px;
+                    font-weight: 600;
+                    font-size: 1.1rem;
+                    margin-bottom: 1.5rem;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="status">● RUNNING</div>
+                <h1>VAYU Backend</h1>
+                <p><strong>Healthy &amp; Ready</strong></p>
+                <p>Please return to the frontend</p>
+            </div>
+        </body>
+    </html>
+    """
+    return HTMLResponse(content=html_content)
 
 
 @app.get("/cities")
 def cities():
-    return {"cities": list(models['city_encoder'].classes_)}
+    city_list = list(models['city_encoder'].classes_)
+    log("Cities list requested", level="INFO", count=len(city_list))
+    return {"cities": city_list}
 
 
 @app.get("/history/24h/all")
 def history_24h_all():
     city_ids = list(models['city_encoder'].classes_)
     since = (datetime.utcnow() - timedelta(hours=48)).strftime("%Y-%m-%dT%H:00:00")
-    response = (
-        supabase
-        .table("aqi_data")
-        .select("city,datetime,pm2_5_ugm3,pm10_ugm3,co_ugm3,no2_ugm3,so2_ugm3,o3_ugm3,AQI")
-        .in_("city", city_ids)
-        .gte("datetime", since)
-        .order("datetime", desc=False)
-        .execute()
-    )
+
+    with Timer() as t:
+        response = (
+            supabase
+            .table("aqi_data")
+            .select("city,datetime,pm2_5_ugm3,pm10_ugm3,co_ugm3,no2_ugm3,so2_ugm3,o3_ugm3,AQI")
+            .in_("city", city_ids)
+            .gte("datetime", since)
+            .order("datetime", desc=False)
+            .execute()
+        )
 
     rows = response.data or []
+    log_history_query(
+        city_count=len(city_ids),
+        since=since,
+        total_rows=len(rows),
+        elapsed_ms=t.ms,
+    )
+
     by_city = {city: [] for city in city_ids}
     for row in rows:
         city = row.get("city")
@@ -227,7 +322,6 @@ def history_24h_all():
                     pos = (slot - left[0]).total_seconds()
                     val = left[1] + (right[1] - left[1]) * (pos / span)
                 elif left:
-                    # mean reversion drift for missing future points
                     val = max(0.0, left[1] * 0.995)
                 elif right:
                     val = max(0.0, right[1] * 1.005)
@@ -249,7 +343,7 @@ def history_24h_all():
 
 @app.post("/predict/forecast")
 def forecast(data: dict):
-    print("Incoming:", data)
+    log("Forecast request received", level="INFO", city=data.get("city"))
 
     city = data["city"]
     city_enc = encode_city(city, models['city_encoder'])
@@ -280,20 +374,29 @@ def forecast(data: dict):
 
     df = df[FORECAST_FEATURES]
 
-    pred6 = float(models['xgb_6h'].predict(df)[0])
-    pred12 = float(models['xgb_12h'].predict(df)[0])
-    pred24 = float(models['xgb_24h'].predict(df)[0])
+    with Timer() as t:
+        pred6  = float(models['xgb_6h'].predict(df)[0])
+        pred12 = float(models['xgb_12h'].predict(df)[0])
+        pred24 = float(models['xgb_24h'].predict(df)[0])
 
     def pack(val):
         cat, col = aqi_to_category(val)
         return {"aqi": val, "category": cat, "color": col}
 
+    cat6,  _ = aqi_to_category(pred6)
+    cat12, _ = aqi_to_category(pred12)
+    cat24, _ = aqi_to_category(pred24)
+
+    log_prediction(city, "6h",  input_aqi=lag1, predicted_aqi=pred6,  category=cat6,  lag1=lag1, elapsed_ms=t.ms)
+    log_prediction(city, "12h", input_aqi=lag1, predicted_aqi=pred12, category=cat12, lag1=lag1)
+    log_prediction(city, "24h", input_aqi=lag1, predicted_aqi=pred24, category=cat24, lag1=lag1)
+
     return {
         "city": city,
         "forecast": {
-            "6h": pack(pred6),
+            "6h":  pack(pred6),
             "12h": pack(pred12),
-            "24h": pack(pred24)
+            "24h": pack(pred24),
         }
     }
 
@@ -327,19 +430,22 @@ def _build_forecast_dataframe(data: dict):
 
 
 def _get_latest_city_row(city: str):
-    response = (
-        supabase
-        .table("aqi_data")
-        .select("*")
-        .eq("city", city.lower().strip())
-        .order("datetime", desc=True)
-        .limit(1)
-        .execute()
-    )
+    with Timer() as t:
+        response = (
+            supabase
+            .table("aqi_data")
+            .select("*")
+            .eq("city", city.lower().strip())
+            .order("datetime", desc=True)
+            .limit(1)
+            .execute()
+        )
 
     if not response.data:
+        log_supabase("SELECT", "aqi_data", city=city, rows=0, elapsed_ms=t.ms)
         raise HTTPException(status_code=404, detail=f"No latest data found for city: {city}")
 
+    log_supabase("SELECT", "aqi_data", city=city, rows=len(response.data), elapsed_ms=t.ms)
     return response.data[0]
 
 
@@ -352,11 +458,15 @@ def _fetch_waqi(city: str):
     if not coords:
         raise HTTPException(status_code=400, detail=f"Unknown city: {city}")
 
+    t0 = time.perf_counter()
+
     # Step 1: search endpoint for multiple stations → median AQI
     search_url = f"https://api.waqi.info/search/?token={WAQI_API_KEY}&keyword={city_lower}"
     try:
         search_resp = requests.get(search_url, timeout=10)
     except Exception as e:
+        log_waqi(city, stations_found=0, aqi_values=[], final_aqi=None,
+                 elapsed_ms=(time.perf_counter() - t0) * 1000, error=e)
         raise HTTPException(status_code=502, detail=f"WAQI search failed: {str(e)}")
 
     if search_resp.status_code != 200:
@@ -377,6 +487,8 @@ def _fetch_waqi(city: str):
     try:
         geo_resp = requests.get(geo_url, timeout=10)
     except Exception as e:
+        log_waqi(city, stations_found=len(aqi_values), aqi_values=aqi_values,
+                 final_aqi=None, elapsed_ms=(time.perf_counter() - t0) * 1000, error=e)
         raise HTTPException(status_code=502, detail=f"WAQI geo failed: {str(e)}")
 
     if geo_resp.status_code != 200:
@@ -393,10 +505,13 @@ def _fetch_waqi(city: str):
     else:
         geo_aqi = safe_float(geo_data["data"].get("aqi"))
         if geo_aqi is None or geo_aqi <= 0:
+            log_waqi(city, stations_found=0, aqi_values=[], final_aqi=None,
+                     elapsed_ms=(time.perf_counter() - t0) * 1000)
             return {"aqi": None, "pm2_5": 0.0, "pm10": 0.0, "co": 0.0, "no2": 0.0, "so2": 0.0, "o3": 0.0}
         final_aqi = int(geo_aqi)
 
-    print(f"[{city}] Station AQIs: {sorted(aqi_values)} → Median: {final_aqi}")
+    log_waqi(city, stations_found=len(aqi_values), aqi_values=aqi_values,
+             final_aqi=final_aqi, elapsed_ms=(time.perf_counter() - t0) * 1000)
 
     iaqi = geo_data["data"].get("iaqi", {})
 
@@ -430,49 +545,6 @@ def _fetch_waqi(city: str):
         "o3":    o3,
     }
 
-def _fetch_openweather(city: str):
-    if not OPENWEATHER_API_KEY:
-        raise HTTPException(status_code=500, detail="OPENWEATHER_API_KEY missing")
-
-    city_lower = city.lower().strip()
-    coords = CITY_COORDS.get(city_lower)
-    if not coords:
-        raise HTTPException(status_code=400, detail=f"Unknown city: {city}")
-
-    lat, lon = coords
-    url = f"http://api.openweathermap.org/data/2.5/air_pollution?lat={lat}&lon={lon}&appid={OPENWEATHER_API_KEY}"
-
-    try:
-        response = requests.get(url, timeout=10)
-    except Exception as e:
-        raise HTTPException(status_code=502, detail=f"OpenWeather request failed: {str(e)}")
-
-    if response.status_code != 200:
-        raise HTTPException(status_code=502, detail=response.text)
-
-    data = response.json()
-
-    if "list" not in data or len(data["list"]) == 0:
-        raise HTTPException(status_code=502, detail=f"Invalid OpenWeather response: {data}")
-
-    components = data["list"][0].get("components", {})
-
-    pm2_5 = safe_float(components.get("pm2_5")) or 0.0
-    pm10 = safe_float(components.get("pm10")) or 0.0
-    co = safe_float(components.get("co")) or 0.0
-    no2 = safe_float(components.get("no2")) or 0.0
-    so2 = safe_float(components.get("so2")) or 0.0
-    o3 = safe_float(components.get("o3")) or 0.0
-
-    return {
-        "pm2_5": pm2_5,
-        "pm10": pm10,
-        "co": co,
-        "no2": no2,
-        "so2": so2,
-        "o3": o3,
-    }
-
 
 @app.post("/predict/forecast/live")
 def forecast_live(data: dict):
@@ -480,6 +552,7 @@ def forecast_live(data: dict):
     if not city:
         raise HTTPException(status_code=400, detail="Field 'city' is required")
 
+    log("Forecast live request", level="INFO", city=city)
     latest = _get_latest_city_row(city)
 
     payload = {
@@ -525,26 +598,23 @@ def forecast_realtime(data: dict):
         if not city:
             raise HTTPException(status_code=400, detail="Field 'city' is required")
 
-        print("=== Forecast Realtime Request ===")
-        print(f"City: {city}")
+        log("Forecast realtime request", level="INFO", city=city)
 
-        print("Fetching latest row from Supabase...")
+        log("Fetching latest row from Supabase", level="DEBUG", city=city)
         latest = _get_latest_city_row(city)
 
-        print("Fetching WAQI (AQI display value only)...")
+        log("Fetching WAQI AQI display value", level="DEBUG", city=city)
         try:
             waqi = _fetch_waqi(city)
         except Exception as e:
-            print(f"WAQI fetch error: {e}")
+            log_error("WAQI fetch failed — using null fallback", exc=e, city=city, show_trace=False)
             waqi = {"aqi": None}
 
-        print(f"WAQI AQI: {waqi.get('aqi')}")
-
         now = datetime.now()
-        current_hour = now.hour
-        current_month = now.month
+        current_hour        = now.hour
+        current_month       = now.month
         current_day_of_week = now.weekday()
-        current_is_weekend = 1 if now.weekday() in [5, 6] else 0
+        current_is_weekend  = 1 if now.weekday() in [5, 6] else 0
 
         # Use Supabase pollutant readings for the model — these come from the
         # cron job which stores real CPCB-scale concentrations. WAQI's
@@ -571,9 +641,10 @@ def forecast_realtime(data: dict):
             "is_weekend":  current_is_weekend,
         }
 
-        print(f"Payload (from Supabase): {payload}")
+        log("Supabase payload ready — running forecast", level="DEBUG", city=city,
+            pm2_5=pm2_5, pm10=pm10, co=co, no2=no2, so2=so2, o3=o3)
+
         forecast_result = forecast(payload)
-        print(f"Forecast result: {forecast_result}")
 
         # current_aqi: prefer WAQI median (multi-station, authoritative display
         # value), fall back to Supabase stored AQI, then lag feature.
@@ -587,11 +658,13 @@ def forecast_realtime(data: dict):
             except:
                 current_aqi = 100
 
+        log("Forecast realtime complete", level="SUCCESS", city=city, current_aqi=current_aqi)
+
         return {
             "city":        city,
             "datetime":    now.isoformat(),
             "current_aqi": current_aqi,
-"current": {
+            "current": {
                 "pm2_5":        pm2_5,
                 "pm10":         pm10,
                 "co":           co,
@@ -609,9 +682,8 @@ def forecast_realtime(data: dict):
     except HTTPException:
         raise
     except Exception as e:
-        print(f"ERROR in forecast_realtime: {str(e)}")
-        import traceback
-        traceback.print_exc()
+        log_error("forecast_realtime failed", exc=e,
+                  route="/predict/forecast/realtime", city=data.get("city"))
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 # =========================
@@ -620,7 +692,7 @@ def forecast_realtime(data: dict):
 
 @app.post("/predict/classify")
 def classify(data: dict):
-    print("Incoming:", data)
+    log("Classify request received", level="INFO", city=data.get("city"))
 
     city = data["city"]
     city_enc = encode_city(city, models['city_encoder'])
@@ -630,34 +702,41 @@ def classify(data: dict):
         "pm10_ugm3": data["pm10"],
         "co_ugm3": data["co"],
         "no2_ugm3": data["no2"],
-        "so2_ugm3": data.get("so2", 20.0),      # ← safe default
+        "so2_ugm3": data.get("so2", 20.0),
         "o3_ugm3": data["o3"],
-        "month": data.get("month", 4),          # ← safe default
-        "hour": data.get("hour", 12),           # ← safe default
+        "month": data.get("month", 4),
+        "hour": data.get("hour", 12),
         "city_enc": city_enc
-    }])[CLF_FEATURES]   # ← now 8 features in correct order
+    }])[CLF_FEATURES]
 
-    pred = models['classifier'].predict(df)[0]
+    with Timer() as t:
+        pred = models['classifier'].predict(df)[0]
+
+    predicted_class = int(pred)
+    cat, _ = aqi_to_category(predicted_class * 100)   # best-effort category label
+    log_classify(city, predicted_class=predicted_class, predicted_category=cat, elapsed_ms=t.ms)
 
     return {
         "city": city,
-        "predicted_class": int(pred)
+        "predicted_class": predicted_class,
     }
 
 
 @app.post("/predict/explain/forecast")
 def explain_forecast(data: dict):
-    print("Incoming for SHAP:", data)
+    city = data.get("city", "unknown")
+    log("SHAP explain request received", level="INFO", city=city)
 
     df = _build_forecast_dataframe(data)
     explainer = models.get("explainer_6h")
-    
+
     if explainer is None:
+        log_error("SHAP explainer not loaded", route="/predict/explain/forecast", city=city)
         raise HTTPException(status_code=500, detail="SHAP explainer not loaded")
 
     try:
-        # Try to call shap_values — this will fail if it's a dict
-        shap_values_array = explainer.shap_values(df)
+        with Timer() as t:
+            shap_values_array = explainer.shap_values(df)
 
         if isinstance(shap_values_array, list):
             shap_values_row = np.array(shap_values_array[0])[0]
@@ -670,9 +749,14 @@ def explain_forecast(data: dict):
             for i in range(len(feature_names))
         }
 
+        # Log top contributing feature
+        top_feature = max(shap_values, key=lambda k: abs(shap_values[k]))
+        log_shap(city, top_feature=top_feature, top_value=shap_values[top_feature],
+                 elapsed_ms=t.ms)
+
         return {"shap_values": shap_values}
 
     except Exception as e:
-        print(f"SHAP explain failed: {str(e)}")
+        log_shap(city, error=e)
         # Return empty dict instead of crashing the whole endpoint
         return {"shap_values": {}}
