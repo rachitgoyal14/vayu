@@ -212,7 +212,15 @@ async def health():
             letter-spacing: 0.04em;
         }
         h1 { font-size: 1.5rem; font-weight: 500; margin-bottom: 6px; }
-        p  { font-size: 0.875rem; color: #6b7280; }
+        p  { font-size: 0.875rem; color: #6b7280; margin-bottom: 6px; }
+        a  {
+            font-size: 0.875rem;
+            color: #6b7280;
+            text-decoration: none;
+            border-bottom: 1px solid #d1d5db;
+            transition: color 0.15s, border-color 0.15s;
+        }
+        a:hover { color: #111; border-color: #111; }
     </style>
 </head>
 <body>
@@ -222,7 +230,8 @@ async def health():
             <span>running</span>
         </div>
         <h1>VAYU Backend</h1>
-        <p>Healthy &amp; ready &mdash; please return to the frontend</p>
+        <p>Healthy &amp; ready</p>
+        <a href="https://vayu.rachitgoyal.in">vayu.rachitgoyal.in</a>
     </div>
 </body>
 </html>"""
