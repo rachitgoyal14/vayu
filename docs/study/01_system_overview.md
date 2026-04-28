@@ -42,7 +42,7 @@ flowchart TD
     end
 
     API["FastAPI Backend\npredict.py"]
-    DASH["Streamlit Dashboard"]
+    DASH["Frontend Dashboard"]
 
     HF --> RAW --> NB1
     EDA --> CLEAN --> ENCODE --> FEAT_SEL --> SPLIT

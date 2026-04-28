@@ -15,3 +15,8 @@ best_classifier.pkl
 context.md
 __pycache__/
 repo_structure.txt
+
+
+compare.py
+
+forecaster.ipynb

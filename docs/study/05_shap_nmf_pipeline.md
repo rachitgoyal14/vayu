@@ -47,7 +47,7 @@ flowchart TD
     end
 
     subgraph PART_C["Part C — Real-Time Inference"]
-        INFER["explain_city_reading()\nentry-point for Streamlit dashboard"]
+        INFER["explain_city_reading()\nentry-point for dashboard"]
         DOM_POLL["Dominant pollutant\nfrom SHAP waterfall"]
         SOURCE_ATTR["Source attribution\nfrom NMF W vector"]
     end

@@ -57,7 +57,7 @@ flowchart TD
         API_HEALTH["Health endpoint\n/health"]
     end
 
-    subgraph FRONTEND["Streamlit Dashboard"]
+    subgraph FRONTEND["deployment Dashboard"]
         CARD_FORE["AQI Forecast cards\n+6h · +12h · +24h"]
         CARD_CLF["Category prediction"]
         CARD_SHAP["Prime pollutant card"]
