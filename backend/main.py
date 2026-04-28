@@ -169,67 +169,65 @@ app.add_middleware(BaseHTTPMiddleware, dispatch=make_logging_middleware())
 
 @app.get("/health")
 async def health():
-    log_health()  # your existing log function
-    
-    html_content = """
-    <!DOCTYPE html>
-    <html>
-        <head>
-            <title>VAYU Backend</title>
-            <style>
-                body {
-                    font-family: 'Segoe UI', Arial, sans-serif;
-                    background: linear-gradient(135deg, #1e3a8a, #3b82f6);
-                    color: white;
-                    height: 100vh;
-                    margin: 0;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    text-align: center;
-                }
-                .container {
-                    background: rgba(255, 255, 255, 0.1);
-                    backdrop-filter: blur(10px);
-                    padding: 3rem 4rem;
-                    border-radius: 20px;
-                    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-                    border: 1px solid rgba(255, 255, 255, 0.2);
-                }
-                h1 {
-                    font-size: 3.5rem;
-                    margin-bottom: 1rem;
-                    font-weight: 700;
-                }
-                p {
-                    font-size: 1.4rem;
-                    opacity: 0.95;
-                    margin-bottom: 2rem;
-                }
-                .status {
-                    display: inline-block;
-                    background: #22c55e;
-                    color: #052e16;
-                    padding: 8px 20px;
-                    border-radius: 50px;
-                    font-weight: 600;
-                    font-size: 1.1rem;
-                    margin-bottom: 1.5rem;
-                }
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <div class="status">● RUNNING</div>
-                <h1>VAYU Backend</h1>
-                <p><strong>Healthy &amp; Ready</strong></p>
-                <p>Please return to the frontend</p>
-            </div>
-        </body>
-    </html>
-    """
-    return HTMLResponse(content=html_content)
+    log_health()
 
+    html_content = """<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>VAYU Backend</title>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #fafafa;
+            color: #111;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .wrap { text-align: center; }
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 99px;
+            padding: 4px 12px;
+            margin-bottom: 1.25rem;
+        }
+        .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #16a34a;
+        }
+        .badge span {
+            font-size: 12px;
+            font-weight: 500;
+            color: #15803d;
+            letter-spacing: 0.04em;
+        }
+        h1 { font-size: 1.5rem; font-weight: 500; margin-bottom: 6px; }
+        p  { font-size: 0.875rem; color: #6b7280; }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <div class="badge">
+            <div class="dot"></div>
+            <span>running</span>
+        </div>
+        <h1>VAYU Backend</h1>
+        <p>Healthy &amp; ready &mdash; please return to the frontend</p>
+    </div>
+</body>
+</html>"""
+
+    return HTMLResponse(content=html_content)
 
 @app.get("/cities")
 def cities():
