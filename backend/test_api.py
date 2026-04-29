@@ -77,7 +77,11 @@ def test_health():
     print("\n--- Testing /health ---")
     r = requests.get(f"{BASE_URL}/health")
     assert r.status_code == 200, f"❌ Health check failed: {r.text}"
-    print(f"✅ {r.json()}")
+    if "text/html" in r.headers.get("content-type", ""):
+        assert "VAYU Backend" in r.text, "❌ Health page missing expected content"
+        print(f"✅ Health page returned (HTML)")
+    else:
+        print(f"✅ {r.json()}")
 
 def test_cities():
     print("\n--- Testing /cities ---")
