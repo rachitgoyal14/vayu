@@ -43,14 +43,27 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const OPENWEATHER_API_KEY = import.meta.env.VITE_OPENWEATHER_API_KEY;
 
 // ─── In-flight deduplication ──────────────────────────────────────────────────
-// If two callers request the same city simultaneously (e.g. CityGrid + AQICard
-// both mounting at the same time), only one HTTP round-trip is made. Both
-// callers receive the exact same Promise, so they resolve with identical data.
+// Prevents duplicate simultaneous requests for the same city (e.g. CityGrid +
+// AQICard both mounting). Uses a WeakMap-style key so that stale entries never
+// block future requests once the previous one settles.
+//
+// IMPORTANT: The map is keyed by city ID only. The entry is deleted as soon as
+// the promise settles (resolve OR reject). This means:
+//   • A *failed* fetch never blocks the next attempt for the same city.
+//   • A *successful* fetch result is shared only within the same "wave" of
+//     concurrent callers — subsequent calls always start fresh.
 const inFlight = new Map<string, Promise<unknown>>();
 
 function deduped<T>(key: string, fn: () => Promise<T>): Promise<T> {
-  if (inFlight.has(key)) return inFlight.get(key) as Promise<T>;
-  const p = fn().finally(() => inFlight.delete(key));
+  const existing = inFlight.get(key);
+  if (existing) return existing as Promise<T>;
+
+  const p = fn().finally(() => {
+    // Remove only if we're still the current entry (guard against races where
+    // a new request was registered before this one settled).
+    if (inFlight.get(key) === p) inFlight.delete(key);
+  });
+
   inFlight.set(key, p);
   return p;
 }
@@ -184,6 +197,8 @@ export async function fetchCityAQI(city: City): Promise<CityAQIData> {
   assertApiBaseUrl();
 
   // Deduplicate: if this city is already being fetched, reuse the same Promise.
+  // The dedup entry is removed as soon as the promise settles, so a subsequent
+  // call after a failure always starts a fresh request (no stuck-forever state).
   return deduped(`cityAQI:${city.id}`, async () => {
     const realtime = await requestJSON<RealtimeForecastResponse>(
       `${API_BASE_URL}/predict/forecast/realtime`,
@@ -210,10 +225,6 @@ export async function fetchCityAQI(city: City): Promise<CityAQIData> {
     const current_aqi = realtime.current_aqi ?? computeAQI(pollutants);
 
     // Derive category purely from the CPCB AQI number — single source of truth.
-    // The /predict/classify endpoint is intentionally not called here; its ML
-    // output can diverge from CPCB thresholds and cause AQICard vs CityGrid
-    // inconsistencies. getCategory() applies the same CPCB breakpoints used
-    // everywhere else in the frontend.
     const category = getCategory(current_aqi);
     const classification = {
       city: city.id,

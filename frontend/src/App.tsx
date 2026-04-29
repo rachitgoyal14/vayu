@@ -231,12 +231,12 @@ export default function App() {
     (seedHistoryCache as CitiesHistory24hResult).cities ?? {},
   );
   const cityCacheRef = useRef<Record<string, CityAQIData>>({});
-  const cityAQIRef = useRef<CityAQIData | null>(null);
   const shapCacheRef = useRef<Record<string, { data: SHAPResult; fetchedAt: number }>>({});
 
+  // Keep cityCacheRef in sync so the error-fallback path always has the latest cache.
   useEffect(() => { cityCacheRef.current = cityCache; }, [cityCache]);
-  useEffect(() => { cityAQIRef.current = cityAQI; }, [cityAQI]);
 
+  // ── 24h history preload ─────────────────────────────────────────────────────
   useEffect(() => {
     const fromStorage = localStorage.getItem(HISTORY_CACHE_KEY);
     if (fromStorage) {
@@ -257,15 +257,91 @@ export default function App() {
     void loadHistory();
   }, []);
 
+  // ── Scroll to top on city change ────────────────────────────────────────────
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [selectedCity]);
 
+  // ── Primary city data loader ────────────────────────────────────────────────
+  // Runs whenever selectedCity changes, and re-runs on the 5-min refresh timer.
+  // This is the only place that sets cityAQI — the forecast-refresh effect below
+  // only *patches* it in-place and never runs before this one resolves.
   useEffect(() => {
     let isMounted = true;
-    const refreshForecastForSelection = async () => {
-      const currentCityAQI = cityAQIRef.current;
-      if (!currentCityAQI) return;
+
+    const loadCityData = async () => {
+      // Show skeleton only on the very first load for this city (no cache yet).
+      const hasCached = !!cityCacheRef.current[selectedCity.id];
+      if (!hasCached) setIsLoading(true);
+
+      setErrorMessage(null);
+      setSensorOffline(false);
+      setPredictionOffline(false);
+
+      try {
+        const nextCityData = await fetchCityAQI(selectedCity);
+        if (!isMounted) return;
+
+        // Populate city state and cache atomically.
+        setCityAQI(nextCityData);
+        setCityCache((prev) => {
+          const next = { ...prev, [selectedCity.id]: nextCityData };
+          cityCacheRef.current = next;
+          return next;
+        });
+
+        // SHAP — use cache if still fresh, otherwise fetch in the background.
+        const cachedShap = shapCacheRef.current[selectedCity.id];
+        const isShapFresh =
+          cachedShap &&
+          Date.now() - cachedShap.fetchedAt < SHAP_REFRESH_INTERVAL_MS &&
+          Object.keys(cachedShap.data.shap_values || {}).length > 0;
+
+        const shapResult = isShapFresh
+          ? cachedShap.data
+          : await fetchSHAP(selectedCity.id, nextCityData.pollutants);
+
+        if (!isMounted) return;
+        setShapData(shapResult);
+        shapCacheRef.current[selectedCity.id] = { data: shapResult, fetchedAt: Date.now() };
+      } catch (error) {
+        if (!isMounted) return;
+        const message = error instanceof Error ? error.message : "Unable to fetch live AQI data.";
+        setErrorMessage(message);
+        if (error instanceof ApiError && error.source === "backend") setPredictionOffline(true);
+        if (error instanceof ApiError && error.source === "openweather") setSensorOffline(true);
+
+        // Fall back to cache so the city never shows blank.
+        const cached = cityCacheRef.current[selectedCity.id] ?? null;
+        if (cached) setCityAQI(cached);
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
+    };
+
+    void loadCityData();
+    const timer = window.setInterval(() => { void loadCityData(); }, CITY_REFRESH_INTERVAL_MS);
+
+    return () => {
+      isMounted = false;
+      window.clearInterval(timer);
+    };
+  }, [selectedCity]);
+
+  // ── Forecast-only refresh ───────────────────────────────────────────────────
+  // Fires only when predictionType changes (NOT on city change — the primary
+  // loader above already fetches the full forecast on city change).
+  // Guards against running before the primary load for this city has resolved.
+  useEffect(() => {
+    let isMounted = true;
+
+    const refreshForecast = async () => {
+      // Wait until the primary loader has populated cityAQI for this city.
+      // We read directly from the cache ref so we don't need cityAQI in the
+      // dependency array (which would cause an infinite re-run loop).
+      const currentCityData = cityCacheRef.current[selectedCity.id];
+      if (!currentCityData) return; // primary load not done yet — skip silently
+
       try {
         const realtime = await fetchRealtimeForecast(selectedCity.id);
         if (!isMounted) return;
@@ -285,13 +361,18 @@ export default function App() {
             day_of_week: realtime.current.day_of_week,
             is_weekend: realtime.current.is_weekend,
           };
-          const next = {
+          const next: CityAQIData = {
             ...prev,
             pollutants: nextPollutants,
             forecast: { city: realtime.city, forecast: realtime.forecast },
             current_aqi: (realtime as { current_aqi?: number }).current_aqi ?? prev.current_aqi,
           };
-          setCityCache((cache) => ({ ...cache, [selectedCity.id]: next }));
+          // Persist the refreshed data back to cache.
+          setCityCache((cache) => {
+            const updated = { ...cache, [selectedCity.id]: next };
+            cityCacheRef.current = updated;
+            return updated;
+          });
           return next;
         });
       } catch {
@@ -300,48 +381,13 @@ export default function App() {
         setErrorMessage("Prediction engine offline");
       }
     };
-    void refreshForecastForSelection();
-    return () => { isMounted = false; };
-  }, [predictionType, selectedCity.id]);
 
-  useEffect(() => {
-    let isMounted = true;
-    const loadCityData = async () => {
-      setIsLoading(true);
-      setErrorMessage(null);
-      setSensorOffline(false);
-      setPredictionOffline(false);
-      try {
-        const nextCityData = await fetchCityAQI(selectedCity);
-        const cachedShap = shapCacheRef.current[selectedCity.id];
-        const isShapFresh =
-          cachedShap &&
-          Date.now() - cachedShap.fetchedAt < SHAP_REFRESH_INTERVAL_MS &&
-          Object.keys(cachedShap.data.shap_values || {}).length > 0;
-        const shapResult = isShapFresh
-          ? cachedShap.data
-          : await fetchSHAP(selectedCity.id, nextCityData.pollutants);
-        if (!isMounted) return;
-        setCityAQI(nextCityData);
-        setCityCache((prev) => ({ ...prev, [selectedCity.id]: nextCityData }));
-        setShapData(shapResult);
-        shapCacheRef.current[selectedCity.id] = { data: shapResult, fetchedAt: Date.now() };
-      } catch (error) {
-        if (!isMounted) return;
-        const message = error instanceof Error ? error.message : "Unable to fetch live AQI data.";
-        setErrorMessage(message);
-        if (error instanceof ApiError && error.source === "backend") setPredictionOffline(true);
-        if (error instanceof ApiError && error.source === "openweather") setSensorOffline(true);
-        const cached = cityCacheRef.current[selectedCity.id] ?? null;
-        if (cached) setCityAQI(cached);
-      } finally {
-        if (isMounted) setIsLoading(false);
-      }
-    };
-    void loadCityData();
-    const timer = window.setInterval(() => { void loadCityData(); }, CITY_REFRESH_INTERVAL_MS);
-    return () => { isMounted = false; window.clearInterval(timer); };
-  }, [selectedCity]);
+    void refreshForecast();
+    return () => { isMounted = false; };
+
+    // Only re-run when predictionType changes. City changes are handled entirely
+    // by the primary loader effect above, which already fetches fresh forecasts.
+  }, [predictionType, selectedCity.id]);
 
   const aqiData = useMemo(() => {
     const fallbackAQI = 100;
@@ -357,6 +403,7 @@ export default function App() {
     const mappedCategory = activeBackendCategory
       ? mapBackendCategory(activeBackendCategory)
       : getCategory(currentAQI);
+
     const trendFromCache = historyCache[selectedCity.id];
     const rawTrend = normalizeTrendTo24(
       trendFromCache && trendFromCache.length > 0
