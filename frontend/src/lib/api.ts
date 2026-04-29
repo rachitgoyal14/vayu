@@ -2,12 +2,11 @@ import type { City } from "./cityData";
 import type {
   CitiesHistory24hResult,
   CityAQIData,
-  ClassifyResult,
   ForecastResult,
   PollutantData,
   SHAPResult,
 } from "./types";
-import { computeAQI } from "./aqiUtils";
+import { computeAQI, getCategory } from "./aqiUtils";
 
 type RawPollutants = Omit<PollutantData, "hour" | "month" | "day_of_week" | "is_weekend">;
 
@@ -42,6 +41,19 @@ interface RealtimeForecastResponse {
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const OPENWEATHER_API_KEY = import.meta.env.VITE_OPENWEATHER_API_KEY;
+
+// ─── In-flight deduplication ──────────────────────────────────────────────────
+// If two callers request the same city simultaneously (e.g. CityGrid + AQICard
+// both mounting at the same time), only one HTTP round-trip is made. Both
+// callers receive the exact same Promise, so they resolve with identical data.
+const inFlight = new Map<string, Promise<unknown>>();
+
+function deduped<T>(key: string, fn: () => Promise<T>): Promise<T> {
+  if (inFlight.has(key)) return inFlight.get(key) as Promise<T>;
+  const p = fn().finally(() => inFlight.delete(key));
+  inFlight.set(key, p);
+  return p;
+}
 
 export class ApiError extends Error {
   source: "openweather" | "backend" | "unknown";
@@ -147,21 +159,6 @@ export async function fetchForecast(
   });
 }
 
-export async function fetchClassification(
-  city: string,
-  pollutants: PollutantData,
-): Promise<ClassifyResult> {
-  assertApiBaseUrl();
-
-  const payload = createPredictionPayload(city, pollutants);
-  console.log("Sending payload:", payload);
-  return requestJSON<ClassifyResult>(`${API_BASE_URL}/predict/classify`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-}
-
 export async function fetchSHAP(city: string, pollutants: PollutantData): Promise<SHAPResult> {
   assertApiBaseUrl();
 
@@ -186,42 +183,55 @@ export async function fetchSHAP(city: string, pollutants: PollutantData): Promis
 export async function fetchCityAQI(city: City): Promise<CityAQIData> {
   assertApiBaseUrl();
 
-  const realtime = await requestJSON<RealtimeForecastResponse>(
-    `${API_BASE_URL}/predict/forecast/realtime`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ city: city.id }),
-    },
-  );
+  // Deduplicate: if this city is already being fetched, reuse the same Promise.
+  return deduped(`cityAQI:${city.id}`, async () => {
+    const realtime = await requestJSON<RealtimeForecastResponse>(
+      `${API_BASE_URL}/predict/forecast/realtime`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ city: city.id }),
+      },
+    );
 
-  const pollutants: PollutantData = {
-    pm2_5: Number(realtime.current.pm2_5 ?? 0),
-    pm10: Number(realtime.current.pm10 ?? 0),
-    co: Number(realtime.current.co ?? 0),
-    no2: Number(realtime.current.no2 ?? 0),
-    so2: Number(realtime.current.so2 ?? 0),
-    o3: Number(realtime.current.o3 ?? 0),
-    hour: Number(realtime.current.hour ?? getTimeFeatures().hour),
-    month: Number(realtime.current.month ?? getTimeFeatures().month),
-    day_of_week: Number(realtime.current.day_of_week ?? getTimeFeatures().day_of_week),
-    is_weekend: Number(realtime.current.is_weekend ?? getTimeFeatures().is_weekend) as 0 | 1,
-  };
+    const pollutants: PollutantData = {
+      pm2_5: Number(realtime.current.pm2_5 ?? 0),
+      pm10: Number(realtime.current.pm10 ?? 0),
+      co: Number(realtime.current.co ?? 0),
+      no2: Number(realtime.current.no2 ?? 0),
+      so2: Number(realtime.current.so2 ?? 0),
+      o3: Number(realtime.current.o3 ?? 0),
+      hour: Number(realtime.current.hour ?? getTimeFeatures().hour),
+      month: Number(realtime.current.month ?? getTimeFeatures().month),
+      day_of_week: Number(realtime.current.day_of_week ?? getTimeFeatures().day_of_week),
+      is_weekend: Number(realtime.current.is_weekend ?? getTimeFeatures().is_weekend) as 0 | 1,
+    };
 
-  const classification = await fetchClassification(city.id, pollutants);
+    const current_aqi = realtime.current_aqi ?? computeAQI(pollutants);
 
-  return {
-    city,
-    pollutants,
-    forecast: {
-      city: realtime.city,
-      forecast: realtime.forecast,
-    },
-    classification,
-    // Prefer the backend's current_aqi (WAQI multi-station median — authoritative).
-    // Fall back to local CPCB sub-index computation only if the field is missing.
-    current_aqi: realtime.current_aqi ?? computeAQI(pollutants),
-  };
+    // Derive category purely from the CPCB AQI number — single source of truth.
+    // The /predict/classify endpoint is intentionally not called here; its ML
+    // output can diverge from CPCB thresholds and cause AQICard vs CityGrid
+    // inconsistencies. getCategory() applies the same CPCB breakpoints used
+    // everywhere else in the frontend.
+    const category = getCategory(current_aqi);
+    const classification = {
+      city: city.id,
+      predicted_category: category,
+      probabilities: { [category]: 1 },
+    };
+
+    return {
+      city,
+      pollutants,
+      forecast: {
+        city: realtime.city,
+        forecast: realtime.forecast,
+      },
+      classification,
+      current_aqi,
+    };
+  });
 }
 
 export async function fetchRealtimeForecast(city: string): Promise<RealtimeForecastResponse> {
