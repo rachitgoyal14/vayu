@@ -68,13 +68,16 @@ export default function CityGrid({ onCitySelect, selectedCity, cityAQI }: CityGr
         mainCities.map(async (city) => {
           try {
             const data = await fetchCityAQI(city);
+            const aqi = Math.round(data.current_aqi);
             return {
               cityId: city.id,
               state: {
                 isLoading: false,
                 hasError: false,
-                aqi: Math.round(data.current_aqi),
-                category: getCategory(data.current_aqi),
+                aqi,
+                // Derive category from the CPCB AQI number — same function
+                // used by AQICard — so both components always agree.
+                category: getCategory(aqi),
                 pm25: Math.round(data.pollutants.pm2_5),
                 pm10: Math.round(data.pollutants.pm10),
               } satisfies CityCardState,
@@ -87,7 +90,7 @@ export default function CityGrid({ onCitySelect, selectedCity, cityAQI }: CityGr
                 isLoading: false,
                 hasError: true,
                 aqi: -1,
-                category: "Moderate",
+                category: "Moderate" as const,
                 pm25: -1,
                 pm10: -1,
               } satisfies CityCardState,
@@ -115,13 +118,15 @@ export default function CityGrid({ onCitySelect, selectedCity, cityAQI }: CityGr
 
   useEffect(() => {
     if (!cityAQI) return;
+    const aqi = Math.round(cityAQI.current_aqi);
     setCityStates((prev) => ({
       ...prev,
       [selectedCity.id]: {
         isLoading: false,
         hasError: false,
-        aqi: Math.round(cityAQI.current_aqi),
-        category: getCategory(cityAQI.current_aqi),
+        aqi,
+        // Same CPCB derivation — never reads from classification response.
+        category: getCategory(aqi),
         pm25: Math.round(cityAQI.pollutants.pm2_5),
         pm10: Math.round(cityAQI.pollutants.pm10),
       },

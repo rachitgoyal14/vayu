@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { motion, AnimatePresence } from "motion/react";
-import { useMemo } from "react";
-import { AQICategory, getAQIColor, mapBackendCategory } from "../lib/aqiUtils";
+import { motion, AnimatePresence, useMotionValue, useSpring } from "motion/react";
+import { useMemo, useEffect, useState } from "react";
+import { getAQIColor, getCategory } from "../lib/aqiUtils";
 import type { ForecastResult } from "../lib/types";
 import AQIMascot from "./AQIMascot";
 
@@ -35,17 +35,14 @@ const RENDER_SATIRICAL_LINES = [
   "Render free instance: technically alive.",
 ];
 
+/** Cycles through satirical lines on a real interval — not just on render. */
 function useRotatingText(lines: string[], interval = 2800) {
-  return useMemo(() => lines[Math.floor(Date.now() / interval) % lines.length], [lines, interval]);
-}
-
-function toAQICategory(value: string): AQICategory {
-  if (value === "Severe") return "Severe";
-  if (value === "Hazardous") return "Severe";
-  if (value === "Unhealthy") return "Poor";
-  if (value === "Unhealthy for Sensitive") return "Moderate";
-  if (value === "Very Unhealthy") return "Poor";
-  return mapBackendCategory(value);
+  const [idx, setIdx] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setIdx((i) => (i + 1) % lines.length), interval);
+    return () => clearInterval(id);
+  }, [lines, interval]);
+  return lines[idx];
 }
 
 const PARTICLES = Array.from({ length: 50 }, (_, i) => ({
@@ -62,48 +59,94 @@ const PARTICLES = Array.from({ length: 50 }, (_, i) => ({
 /* ─── Health Check Banner ───────────────────────────────────────────────── */
 function HealthCheckBanner() {
   const HEALTH_URL = "https://vayu-6ss8.onrender.com/health";
+  const [hovered, setHovered] = useState(false);
 
   return (
     <a
       href={HEALTH_URL}
       target="_blank"
       rel="noopener noreferrer"
-      className="group flex items-center justify-between w-full px-4 py-3 rounded-2xl border border-amber-500/30 bg-amber-500/[0.07] hover:bg-amber-500/[0.13] hover:border-amber-500/50 transition-all duration-300"
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      className="group relative flex items-center justify-between w-full px-5 py-4 rounded-2xl overflow-hidden transition-all duration-300"
+      style={{
+        background: hovered
+          ? "linear-gradient(135deg, rgba(245,158,11,0.18) 0%, rgba(220,38,38,0.10) 100%)"
+          : "linear-gradient(135deg, rgba(245,158,11,0.09) 0%, rgba(220,38,38,0.05) 100%)",
+        border: hovered ? "1px solid rgba(245,158,11,0.6)" : "1px solid rgba(245,158,11,0.35)",
+        boxShadow: hovered
+          ? "0 0 24px rgba(245,158,11,0.18), inset 0 0 24px rgba(245,158,11,0.04)"
+          : "0 0 12px rgba(245,158,11,0.08)",
+      }}
     >
-      {/* Left: icon + label */}
-      <div className="flex items-center gap-3">
-        {/* Pulsing amber dot */}
-        <span className="relative flex h-3 w-3 shrink-0">
+      {/* Shimmer sweep on hover */}
+      <motion.div
+        className="absolute inset-0 pointer-events-none"
+        animate={hovered ? { x: ["−100%", "200%"] } : { x: "−100%" }}
+        transition={{ duration: 0.7, ease: "easeOut" }}
+        style={{
+          background: "linear-gradient(90deg, transparent, rgba(245,158,11,0.12), transparent)",
+          width: "60%",
+        }}
+      />
+
+      {/* Left: status dot + label */}
+      <div className="flex items-center gap-3 z-10">
+        {/* Triple-ring pulsing amber beacon */}
+        <span className="relative flex h-4 w-4 shrink-0 items-center justify-center">
           <motion.span
-            className="absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-60"
-            animate={{ scale: [1, 2.2, 1], opacity: [0.6, 0, 0.6] }}
-            transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute inline-flex h-full w-full rounded-full bg-amber-400"
+            animate={{ scale: [1, 2.4, 1], opacity: [0.5, 0, 0.5] }}
+            transition={{ duration: 1.6, repeat: Infinity, ease: "easeOut" }}
           />
-          <span className="relative inline-flex h-3 w-3 rounded-full bg-amber-400" />
+          <motion.span
+            className="absolute inline-flex rounded-full bg-amber-400/40"
+            style={{ width: "180%", height: "180%" }}
+            animate={{ scale: [1, 1.6, 1], opacity: [0.3, 0, 0.3] }}
+            transition={{ duration: 1.6, repeat: Infinity, ease: "easeOut", delay: 0.3 }}
+          />
+          <span className="relative inline-flex h-3 w-3 rounded-full bg-amber-400 shadow-[0_0_8px_2px_rgba(245,158,11,0.8)]" />
         </span>
 
         <div className="leading-none">
-          <p className="text-amber-300 text-[11px] font-black uppercase tracking-widest">
-            Backend Sleeping
+          <p className="text-amber-300 text-[11px] font-black uppercase tracking-widest mb-1">
+            ⚠ Backend Sleeping — Click to Wake
           </p>
-          <p className="text-amber-500/70 text-[9px] font-bold tracking-wide mt-0.5">
-            Render free tier — click to wake
-          </p>
+          {/* Full highlighted URL */}
+          <motion.p
+            animate={{ opacity: [0.7, 1, 0.7] }}
+            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+            className="font-mono text-[10px] font-bold tracking-wide"
+            style={{
+              color: "#fbbf24",
+              textShadow: "0 0 8px rgba(251,191,36,0.6)",
+            }}
+          >
+            {HEALTH_URL}
+          </motion.p>
         </div>
       </div>
 
-      {/* Right: URL pill + arrow */}
-      <div className="flex items-center gap-2">
-        <span className="hidden sm:inline-block font-mono text-[9px] text-amber-500/60 group-hover:text-amber-400/90 transition-colors duration-200 truncate max-w-[160px]">
-          vayu-6ss8.onrender.com/health
-        </span>
-        <motion.span
-          className="text-amber-400 text-sm leading-none"
-          animate={{ x: [0, 3, 0] }}
-          transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
+      {/* Right: animated arrow */}
+      <div className="flex items-center gap-2 z-10 shrink-0">
+        <motion.div
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl"
+          style={{
+            background: hovered ? "rgba(245,158,11,0.25)" : "rgba(245,158,11,0.12)",
+            border: "1px solid rgba(245,158,11,0.4)",
+          }}
+          animate={{ scale: hovered ? 1.05 : 1 }}
+          transition={{ duration: 0.2 }}
         >
-          ↗
-        </motion.span>
+          <span className="text-amber-300 text-[10px] font-black uppercase tracking-widest">Open</span>
+          <motion.span
+            className="text-amber-300 text-sm leading-none"
+            animate={{ x: [0, 3, 0], y: [0, -3, 0] }}
+            transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
+          >
+            ↗
+          </motion.span>
+        </motion.div>
       </div>
     </a>
   );
@@ -112,6 +155,18 @@ function HealthCheckBanner() {
 /* ─── Loading Skeleton ──────────────────────────────────────────────────── */
 function LoadingSkeleton() {
   const satiricalLine = useRotatingText(RENDER_SATIRICAL_LINES);
+  const [progress, setProgress] = useState(5);
+
+  // Fake jittery progress bar that stalls like a real cold-start
+  useEffect(() => {
+    const steps = [12, 18, 19, 22, 21, 35, 36, 37, 38, 50, 49, 52, 51, 60];
+    let i = 0;
+    const id = setInterval(() => {
+      setProgress(steps[i % steps.length]);
+      i++;
+    }, 900);
+    return () => clearInterval(id);
+  }, []);
 
   return (
     <div className="relative p-10 rounded-3xl bg-white/[0.03] backdrop-blur-2xl border border-white/10 overflow-hidden min-h-[550px] flex flex-col h-full shadow-2xl">
@@ -120,7 +175,8 @@ function LoadingSkeleton() {
         <motion.div
           className="absolute inset-0 opacity-[0.03]"
           style={{
-            backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,0.15) 2px, rgba(255,255,255,0.15) 4px)",
+            backgroundImage:
+              "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,0.15) 2px, rgba(255,255,255,0.15) 4px)",
           }}
           animate={{ backgroundPositionY: ["0px", "100px"] }}
           transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
@@ -130,6 +186,16 @@ function LoadingSkeleton() {
           animate={{ opacity: [0.05, 0.12, 0.05] }}
           transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
           style={{ background: "radial-gradient(ellipse at 50% 50%, #94a3b855 0%, transparent 70%)" }}
+        />
+        {/* Diagonal sweep */}
+        <motion.div
+          className="absolute inset-0"
+          animate={{ x: ["-100%", "200%"] }}
+          transition={{ duration: 4, repeat: Infinity, ease: "linear", repeatDelay: 1.5 }}
+          style={{
+            width: "40%",
+            background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.015), transparent)",
+          }}
         />
       </div>
 
@@ -173,22 +239,39 @@ function LoadingSkeleton() {
       {/* Middle content skeleton */}
       <div className="grid grid-cols-5 gap-10 items-center mb-auto relative z-10">
         <div className="col-span-2 flex justify-center items-center">
-          <motion.div
-            className="w-32 h-32 rounded-full border-2 border-dashed border-slate-700/60 flex items-center justify-center"
-            animate={{ rotate: [0, 360] }}
-            transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
-          >
+          {/* Spinning gear with inner orbit */}
+          <div className="relative w-36 h-36 flex items-center justify-center">
             <motion.div
+              className="absolute inset-0 rounded-full border-2 border-dashed border-slate-700/50"
+              animate={{ rotate: [0, 360] }}
+              transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+            />
+            <motion.div
+              className="absolute rounded-full border border-slate-700/30"
+              style={{ inset: "16px" }}
               animate={{ rotate: [0, -360] }}
-              transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
+              transition={{ duration: 14, repeat: Infinity, ease: "linear" }}
+            />
+            {/* Orbiting dot */}
+            <motion.div
+              className="absolute w-3 h-3 rounded-full bg-slate-600"
+              style={{ top: "8px", left: "50%", marginLeft: "-6px" }}
+              animate={{ rotate: [0, 360] }}
+              transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+              // orbit by rotating the container reference
+            />
+            <motion.div
+              className="text-4xl select-none"
+              animate={{
+                scale: [1, 1.12, 1],
+                rotate: [0, 5, -5, 0],
+                opacity: [0.5, 1, 0.5],
+              }}
+              transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
             >
-              <svg className="w-10 h-10 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-                  d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
+              💤
             </motion.div>
-          </motion.div>
+          </div>
         </div>
 
         <div className="col-span-3 space-y-8">
@@ -216,9 +299,18 @@ function LoadingSkeleton() {
             </div>
             <div className="flex bg-black/50 p-1 rounded-2xl border border-white/5 gap-1">
               {["6h", "12h", "24h"].map((t, i) => (
-                <div key={t} className="flex-1 py-3 rounded-xl bg-white/[0.03] flex flex-col items-center gap-1">
-                  <div className="h-2 w-12 rounded-full bg-white/10 animate-pulse" style={{ animationDelay: `${i * 0.2}s` }} />
-                  <div className="h-4 w-8 rounded bg-white/5 animate-pulse" style={{ animationDelay: `${i * 0.2}s` }} />
+                <div
+                  key={t}
+                  className="flex-1 py-3 rounded-xl bg-white/[0.03] flex flex-col items-center gap-1"
+                >
+                  <div
+                    className="h-2 w-12 rounded-full bg-white/10 animate-pulse"
+                    style={{ animationDelay: `${i * 0.2}s` }}
+                  />
+                  <div
+                    className="h-4 w-8 rounded bg-white/5 animate-pulse"
+                    style={{ animationDelay: `${i * 0.2}s` }}
+                  />
                 </div>
               ))}
             </div>
@@ -228,32 +320,29 @@ function LoadingSkeleton() {
 
       {/* Footer */}
       <div className="mt-12 pt-8 border-t border-white/5 relative z-10 space-y-4">
-
         {/* ── Prominent Health Check Banner ── */}
         <HealthCheckBanner />
 
-        {/* ── Original footer row ── */}
+        {/* ── Status row ── */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-5">
-            <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/5 flex items-center justify-center">
-              <motion.svg
-                className="w-5 h-5 text-slate-600"
-                fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                animate={{ opacity: [0.4, 1, 0.4] }}
-                transition={{ duration: 1.8, repeat: Infinity }}
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/5 flex items-center justify-center shrink-0">
+              <motion.span
+                className="text-2xl select-none"
+                animate={{ rotate: [0, -15, 15, -15, 0], scale: [1, 1.1, 1] }}
+                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
               >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                  d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-              </motion.svg>
+                🌙
+              </motion.span>
             </div>
             <div className="space-y-1.5">
               <p className="text-slate-100 text-sm font-bold tracking-tight">Render Free Tier Protocol</p>
               <AnimatePresence mode="wait">
                 <motion.p
                   key={satiricalLine}
-                  initial={{ opacity: 0, y: 4, filter: "blur(4px)" }}
+                  initial={{ opacity: 0, y: 6, filter: "blur(4px)" }}
                   animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                  exit={{ opacity: 0, y: -4, filter: "blur(4px)" }}
+                  exit={{ opacity: 0, y: -6, filter: "blur(4px)" }}
                   transition={{ duration: 0.4 }}
                   className="text-slate-500 text-[10px] uppercase font-black tracking-widest"
                 >
@@ -263,16 +352,14 @@ function LoadingSkeleton() {
             </div>
           </div>
 
-          {/* Progress bar */}
+          {/* Jittery wake progress */}
           <div className="text-right min-w-[140px] space-y-2">
             <p className="text-slate-600 text-[9px] font-black uppercase tracking-widest">Wake Progress</p>
             <div className="h-1.5 w-36 bg-white/5 rounded-full overflow-hidden">
               <motion.div
-                className="h-full rounded-full bg-slate-600/60"
-                animate={{
-                  width: ["5%", "45%", "48%", "49%", "47%", "50%", "10%", "60%"],
-                }}
-                transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+                className="h-full rounded-full bg-amber-600/50"
+                animate={{ width: `${progress}%` }}
+                transition={{ duration: 0.6, ease: "easeOut" }}
               />
             </div>
             <p className="text-slate-700 text-[8px] font-black tracking-wider">technically, soon™</p>
@@ -282,12 +369,11 @@ function LoadingSkeleton() {
 
       {/* AQI Gradient Strip — greyed out */}
       <div className="absolute bottom-0 left-0 right-0 h-1 flex opacity-20">
-        <div className="h-full w-[10%] bg-slate-600" />
-        <div className="h-full w-[10%] bg-slate-600" />
-        <div className="h-full w-[20%] bg-slate-600" />
-        <div className="h-full w-[20%] bg-slate-600" />
-        <div className="h-full w-[20%] bg-slate-600" />
-        <div className="h-full w-[20%] bg-slate-600" />
+        {["bg-slate-600", "bg-slate-600", "bg-slate-600", "bg-slate-600", "bg-slate-600", "bg-slate-600"].map(
+          (cls, i) => (
+            <div key={i} className={`h-full flex-1 ${cls}`} />
+          )
+        )}
         <motion.div
           className="absolute top-[-6px] w-1.5 h-3.5 bg-slate-500 rounded-full z-10"
           animate={{ left: ["5%", "95%", "5%"] }}
@@ -301,22 +387,24 @@ function LoadingSkeleton() {
 /* ─── Main AQICard ──────────────────────────────────────────────────────── */
 export default function AQICard({
   aqi,
-  category,
   pm25,
   pm10,
   forecast,
   predictionType,
   onPredictionChange,
   isLoading = false,
-}: AQICardProps) {
+}: Omit<AQICardProps, "category"> & { category?: string }) {
   if (isLoading) {
     return <LoadingSkeleton />;
   }
 
+  // Derive category exclusively from the CPCB AQI number.
+  const displayCategory = getCategory(aqi);
+  const color = getAQIColor(displayCategory);
+
   const activeForecast = forecast[predictionType];
-  const displayCategory = activeForecast?.category ?? category;
-  const color = activeForecast?.color ?? getAQIColor(toAQICategory(displayCategory));
-  const mascotCategory = toAQICategory(displayCategory);
+  const forecastColor =
+    activeForecast?.color ?? getAQIColor(getCategory(Math.round(activeForecast?.aqi ?? aqi)));
 
   const activeParticles = PARTICLES.slice(0, aqi > 200 ? 50 : 25);
 
@@ -341,6 +429,7 @@ export default function AQICard({
             }}
           />
 
+          {/* Drifting clouds */}
           <div className="absolute inset-0">
             {[...Array(4)].map((_, i) => (
               <motion.div
@@ -371,6 +460,7 @@ export default function AQICard({
             ))}
           </div>
 
+          {/* Particles */}
           <div className="absolute inset-0">
             {activeParticles.map((p, i) => (
               <motion.div
@@ -415,6 +505,7 @@ export default function AQICard({
             }}
           />
 
+          {/* City silhouettes */}
           <div
             className="absolute bottom-4 left-0 right-0 h-24 opacity-10 flex items-end justify-center px-10 gap-12 overflow-hidden grayscale brightness-200"
             style={{ filter: `drop-shadow(0 0 20px ${color})` }}
@@ -478,7 +569,7 @@ export default function AQICard({
         {/* Middle: Mascot + Stats */}
         <div className="grid grid-cols-5 gap-10 items-center mb-auto relative z-10">
           <div className="col-span-2 relative flex justify-center">
-            <AQIMascot category={mascotCategory} />
+            <AQIMascot category={displayCategory} />
             <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-[9px] uppercase font-black text-slate-500 tracking-[0.3em] whitespace-nowrap bg-black/40 px-3 py-1 rounded-full border border-white/5">
               Impact Core: {displayCategory.toUpperCase()}
             </div>
@@ -590,7 +681,7 @@ export default function AQICard({
                 initial={{ y: 10, opacity: 0, filter: "blur(4px)" }}
                 animate={{ y: 0, opacity: 1, filter: "blur(0px)" }}
                 className="text-5xl font-black tabular-nums leading-none tracking-tighter"
-                style={{ color }}
+                style={{ color: forecastColor }}
               >
                 {Math.round(forecast[predictionType].aqi)}
               </motion.p>

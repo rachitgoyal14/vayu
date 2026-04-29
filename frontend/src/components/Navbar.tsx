@@ -4,7 +4,7 @@
  */
 
 import { Search, MapPin, Wind } from "lucide-react";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { CITIES, City } from "../lib/cityData";
 import { motion, AnimatePresence } from "motion/react";
 
@@ -63,16 +63,24 @@ async function geocodeIndia(query: string): Promise<{ lat: number; lng: number; 
 
 interface Suggestion {
   city: City;
-  label: string;       // city name to display
-  sublabel: string;    // e.g. "Nearest node to Mohali"
-  distance?: number;   // km, shown for proximal matches
+  label: string;
+  sublabel: string;
+  distance?: number;
 }
+
+// How long (ms) the user must stop typing before a geocode request fires.
+// Long enough that mid-word keystrokes never trigger a lookup, short enough
+// that the result appears quickly after they finish typing.
+const GEOCODE_DEBOUNCE_MS = 600;
 
 export default function Navbar({ onCitySelect, selectedCity }: NavbarProps) {
   const [query, setQuery] = useState("");
   const [isFocused, setIsFocused] = useState(false);
   const [geocodeSuggestions, setGeocodeSuggestions] = useState<Suggestion[]>([]);
   const [geocoding, setGeocoding] = useState(false);
+
+  // Ref to hold the debounce timer so we can cancel it on every keystroke.
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Direct name matches (synchronous, instant)
   const directSuggestions = useMemo<Suggestion[]>(() => {
@@ -92,41 +100,62 @@ export default function Navbar({ onCitySelect, selectedCity }: NavbarProps) {
     return [...directSuggestions, ...extras].slice(0, 8);
   }, [directSuggestions, geocodeSuggestions]);
 
-  // Trigger geocode when direct matches are 0 and query is long enough
-  const handleQueryChange = async (value: string) => {
-    setQuery(value);
-    const q = value.trim();
+  // Geocode effect — fires only after the user stops typing for GEOCODE_DEBOUNCE_MS.
+  // This prevents intermediate partial words like "pat" (mid-"patiala") from
+  // geocoding to the wrong location entirely.
+  useEffect(() => {
+    const q = query.trim();
 
+    // Clear stale geocode results whenever the query changes so they don't
+    // linger while the user is still typing.
+    setGeocodeSuggestions([]);
+
+    // Don't geocode if query is too short or a direct match already exists.
     if (q.length < 3) {
-      setGeocodeSuggestions([]);
+      setGeocoding(false);
       return;
     }
 
-    // Already have a direct match — no need to geocode
-    const hasDirectMatch = CITIES.some((c) => c.name.toLowerCase().includes(q.toLowerCase()));
+    const hasDirectMatch = CITIES.some((c) =>
+      c.name.toLowerCase().includes(q.toLowerCase()),
+    );
     if (hasDirectMatch) {
-      setGeocodeSuggestions([]);
+      setGeocoding(false);
       return;
     }
 
-    // Fire geocode after a small debounce
-    setGeocoding(true);
-    const geo = await geocodeIndia(q);
-    setGeocoding(false);
+    // Cancel any pending geocode from a previous keystroke.
+    if (debounceTimer.current) clearTimeout(debounceTimer.current);
 
-    if (!geo) return;
+    // Schedule the geocode — it will only run if the user has paused typing.
+    debounceTimer.current = setTimeout(async () => {
+      setGeocoding(true);
+      const geo = await geocodeIndia(q);
+      setGeocoding(false);
 
-    const nearest = nearestCity(geo.lat, geo.lng);
-    const dist = Math.round(haversineKm(geo.lat, geo.lng, nearest.lat, nearest.lng));
+      if (!geo) return;
 
-    setGeocodeSuggestions([
-      {
-        city: nearest,
-        label: nearest.name,
-        sublabel: `Nearest node to "${q}" (~${dist} km)`,
-        distance: dist,
-      },
-    ]);
+      const nearest = nearestCity(geo.lat, geo.lng);
+      const dist = Math.round(haversineKm(geo.lat, geo.lng, nearest.lat, nearest.lng));
+
+      setGeocodeSuggestions([
+        {
+          city: nearest,
+          label: nearest.name,
+          sublabel: `Nearest node to "${q}" (~${dist} km)`,
+          distance: dist,
+        },
+      ]);
+    }, GEOCODE_DEBOUNCE_MS);
+
+    // Clean up if query changes before the timer fires.
+    return () => {
+      if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    };
+  }, [query]);
+
+  const handleQueryChange = (value: string) => {
+    setQuery(value);
   };
 
   return (
@@ -158,7 +187,7 @@ export default function Navbar({ onCitySelect, selectedCity }: NavbarProps) {
           <input
             type="text"
             value={query}
-            onChange={(e) => void handleQueryChange(e.target.value)}
+            onChange={(e) => handleQueryChange(e.target.value)}
             onFocus={() => setIsFocused(true)}
             onBlur={() => setTimeout(() => setIsFocused(false), 200)}
             placeholder="Search any city — nearest sensor node auto-resolved..."
