@@ -5,6 +5,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import { Analytics } from "@vercel/analytics/react";
 import Atmosphere from "./components/Atmosphere";
 import Navbar from "./components/Navbar";
 import AQICard from "./components/AQICard";
@@ -596,6 +597,7 @@ export default function App() {
           </div>
         </div>
       </footer>
+      <Analytics />
     </div>
   );
 }
