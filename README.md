@@ -421,6 +421,9 @@ Agartala, Ahmedabad, Aizawl, Bengaluru, Bhopal, Bhubaneswar, Chandigarh, Chennai
 
 ---
 
-## License
+## Built with ❤️ by
 
-MIT License — See [LICENSE](LICENSE) for details.
+- [@rachitgoyal14](https://github.com/rachitgoyal14)
+- [@riyasainii448](https://github.com/riyasainii448)
+- [@rahulgoyal1509](https://github.com/rahulgoyal1509)
+- Puneet Sethi
